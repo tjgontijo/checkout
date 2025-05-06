@@ -9,6 +9,7 @@ import { EditMenuDialog } from "./EditMenuDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { MenuToolbar } from "./MenuToolbar";
 import { reorderMenuItems } from "@/app/dashboard/settings/menus/actions";
+import { toast } from "sonner";
 
 // Tipagem forte para os itens de menu
 export interface MenuItemWithRelations {
@@ -48,9 +49,6 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
   
   // Estado para controlar o modal/drawer de edição
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  
-  // Estado para o modo de edição (criar ou editar)
-  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   
   // Estado para controlar o diálogo de criação
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -128,25 +126,6 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
     // fetchMenuItems();
   }
   
-  // Função para obter a próxima ordem para um novo item
-  const getNextOrder = (parentId?: string | null): number => {
-    if (!parentId) {
-      // Para itens raiz, encontrar o maior order e adicionar 10
-      const maxOrder = Math.max(0, ...menuItems
-        .filter(item => !item.parentId)
-        .map(item => item.order ?? 0));
-      return maxOrder + 10;
-    } else {
-      // Para subitens, encontrar o item pai e o maior order entre seus filhos
-      const parent = menuItems.find(item => item.id === parentId);
-      if (parent && parent.children && parent.children.length > 0) {
-        const maxChildOrder = Math.max(0, ...parent.children.map(child => child.order ?? 0));
-        return maxChildOrder + 10;
-      }
-      return 10; // Primeiro filho
-    }
-  };
-  
   // Flatten menu tree para operações
   function flattenItems(items: MenuItemWithRelations[]): MenuItemWithRelations[] {
     return items.reduce<MenuItemWithRelations[]>((acc, cur) => [
@@ -206,7 +185,6 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
         <MenuTree 
           items={filteredItems} 
           onEditItem={handleEditItem}
-          onCreateItem={handleCreateItem}
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
         />
@@ -215,10 +193,10 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
       {/* Editor de item */}
       {isEditorOpen && selectedItem && (
         <MenuEditor
-          mode={editorMode}
+          mode="edit"
           item={selectedItem}
           permissions={permissions}
-          menuItems={menuItems}
+          menuItems={menuItems.filter(item => item.id !== selectedItem.id)}
           onClose={handleCloseEditor}
         />
       )}
