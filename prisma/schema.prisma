@@ -1,0 +1,392 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========================
+// Authentication Models
+// ========================
+
+model User {
+  id             String   @id @default(uuid())
+  fullName       String
+  phoneNumber    String
+  email          String   @unique
+  emailVerified  DateTime?
+  password       String
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sessions       Session[]
+  tokens         Token[]
+  roles          Role[]   @relation("RoleToUser")
+  auditLogs      AuditLog[]
+  userConsents   UserConsent[]
+
+  @@index([id, email])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Token {
+  id      String   @id @default(uuid())
+  token   String   @unique
+  expires DateTime
+  type    String
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========================
+// RBAC Models
+// ========================
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  permissions RolePermission[]
+  users       User[]           @relation("RoleToUser")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  resourceId  String?
+  actionId    String?
+  description String
+
+  action      Action?          @relation(fields: [actionId], references: [id])
+  resource    Resource?        @relation(fields: [resourceId], references: [id])
+  roles       RolePermission[]
+  menuItems   MenuItem[]
+
+  @@index([resourceId])
+  @@index([actionId])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  grantedBy    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+model Resource {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  category    String?
+  permissions Permission[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Action {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  description String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  permissions Permission[]
+}
+
+model MenuItem {
+  id          String     @id @default(uuid())
+  label       String
+  icon        String
+  href        String
+  parentId    String?
+  parent      MenuItem?  @relation("MenuParent", fields: [parentId], references: [id])
+  children    MenuItem[] @relation("MenuParent")
+  permissionId String?
+  permission  Permission? @relation(fields: [permissionId], references: [id])
+  showInMenu  Boolean    @default(true)
+  order       Int?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([permissionId])
+}
+
+// ========================
+// System Monitoring
+// ========================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  description String
+  metadata    String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserConsent {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  consentGiven   Boolean  @default(false)
+  consentDate    DateTime @default(now())
+  consentIp      String
+  method         String   @default("web_form")
+  serviceContext String   @default("default")
+
+  @@unique([userId, serviceContext])
+  @@index([userId])
+  @@index([consentDate])
+}
+
+// ========================
+// Checkout and Digital Sales
+// ========================
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String
+  price           Float
+  priceCurrency   String   @default("BRL") // Multi-moeda
+  slug            String   @unique
+  salesPageUrl    String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  checkouts       Checkout[]
+  orderBumps      CheckoutOrderBump[]
+  orders          Order[]
+  productAsset    ProductAsset?
+  orderItems      OrderItem[]
+  translations    ProductTranslation[]
+  
+  @@index([isActive, deletedAt])
+}
+
+model ProductTranslation {
+  id              Int      @id @default(autoincrement())
+  productId       Int
+  languageCode    String   // "pt-BR", "en-US", etc.
+  name            String
+  description     String
+  
+  product         Product  @relation(fields: [productId], references: [id])
+  
+  @@unique([productId, languageCode])
+}
+
+model ProductAsset {
+  id           Int      @id @default(autoincrement())
+  productId    Int      @unique
+  bucket       String   // nome do bucket MinIO
+  objectKey    String   // chave/caminho do objeto no MinIO
+  fileName     String
+  fileSize     Int
+  fileType     String
+  expiryDays   Int      @default(90)  // dias de expiração do link
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product      Product  @relation(fields: [productId], references: [id])
+  @@index([productId])
+}
+
+
+model Checkout {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  productId       Int
+  price           Float
+  priceCurrency   String    @default("BRL") // Multi-moeda
+  campaignName    String?
+  upsellPageUrl   String?
+  allowCoupon     Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  product         Product   @relation(fields: [productId], references: [id])
+  orderBumps      CheckoutOrderBump[]
+  orders          Order[]
+  translations    CheckoutTranslation[]
+  
+  @@index([isActive, deletedAt])
+}
+
+model CheckoutTranslation {
+  id              Int      @id @default(autoincrement())
+  checkoutId      Int
+  languageCode    String  // "pt-BR", "en-US", etc.
+  campaignName    String?
+  successMessage  String?
+  thankYouMessage String?
+  
+  checkout        Checkout @relation(fields: [checkoutId], references: [id])
+  
+  @@unique([checkoutId, languageCode])
+}
+
+model CheckoutOrderBump {
+  id               Int      @id @default(autoincrement())
+  checkoutId       Int
+  productId        Int
+  shortDescription String
+  displayOrder     Int?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  checkout         Checkout @relation(fields: [checkoutId], references: [id])
+  product          Product  @relation(fields: [productId], references: [id])
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  CANCELLED
+  REFUNDED
+}
+
+model Order {
+  id              Int           @id @default(autoincrement())
+  checkoutId      Int
+  productId       Int
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  paidAmount      Float
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentCode     String?       // External payment reference (like Mercado Pago)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  checkout        Checkout      @relation(fields: [checkoutId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id])
+  accessToken     AccessToken?
+  orderItems      OrderItem[]
+
+  @@index([paymentStatus, createdAt])
+  @@index([customerEmail])
+}
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  quantity    Int     @default(1)
+  priceAtTime Float    // Preço no momento da compra
+  isOrderBump Boolean  @default(false)
+  isUpsell    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  order       Order   @relation(fields: [orderId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
+  
+  @@index([orderId])
+  @@index([productId])
+}
+
+model AccessToken {
+  id              Int       @id @default(autoincrement())
+  orderId         Int       @unique
+  token           String    @unique
+  isActive        Boolean   @default(true)
+  downloadsCount  Int       @default(0)
+  maxDownloads    Int       @default(5)
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  order           Order     @relation(fields: [orderId], references: [id])
+  downloads       Download[]
+  
+  @@index([isActive, createdAt])
+}
+
+model Download {
+  id            Int       @id @default(autoincrement())
+  accessTokenId Int
+  ipAddress     String
+  userAgent     String
+  fileName      String    // Nome do arquivo baixado
+  downloadedAt  DateTime  @default(now())
+  
+  accessToken   AccessToken @relation(fields: [accessTokenId], references: [id])
+  
+  @@index([accessTokenId, downloadedAt])
+}
+
+model Webhook {
+  id          Int       @id @default(autoincrement())
+  url         String
+  events      String[]  // array de eventos: "order.created", "payment.approved", etc.
+  active      Boolean   @default(true)
+  secretKey   String?   // chave para assinatura HMAC
+  description String?
+  retryCount  Int       @default(0) // Número de tentativas de envio
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  
+  logs        WebhookLog[]
+  
+  @@index([active])
+}
+
+model WebhookLog {
+  id          Int      @id @default(autoincrement())
+  webhookId   Int
+  event       String
+  payload     String   // JSON payload enviado
+  response    String?  // resposta do servidor externo
+  statusCode  Int?
+  success     Boolean
+  sentAt      DateTime @default(now())
+  
+  webhook     Webhook  @relation(fields: [webhookId], references: [id])
+  
+  @@index([webhookId, success])
+  @@index([event, sentAt])
+}
