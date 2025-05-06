@@ -169,7 +169,7 @@ export async function seedMenuItems() {
           },
           {
             label: 'Menus',
-            icon: 'ShieldCheck',
+            icon: 'Menu',
             href: '/dashboard/settings/menus',
             parentId: configMenu.id,
             order: 6,

@@ -1,7 +1,14 @@
 // Reexporta todas as Server Actions de menu para importação simplificada
-export * from './createMenuItem';
-export * from './updateMenuItem';
-export * from './deleteMenuItem';
-export * from './reorderMenuItems';
-export * from './checkIfDescendant';
-export * from './invalidateMenuCache';
+import { createMenuItem } from './createMenuItem';
+import { updateMenuItem } from './updateMenuItem';
+import { deleteMenuItem } from './deleteMenuItem';
+import { reorderMenuItems } from './reorderMenuItems';
+import { checkIfDescendant } from './checkIfDescendant';
+
+export {
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+  reorderMenuItems,
+  checkIfDescendant
+};

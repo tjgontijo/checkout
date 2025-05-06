@@ -1,9 +1,21 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
-import { requireAdmin, logAudit, menuItemSchema } from "./utils";
+import { requirePermission } from "@/lib/services/require-permission.service";
+import { invalidateCache } from "@/lib/services/invalidate-user-cache.service";
+import { logAudit } from "@/lib/services/audit.service";
+
+// Schema de validação para atualização de itens de menu
+const menuItemSchema = z.object({
+  label: z.string().min(2, "O rótulo deve ter pelo menos 2 caracteres"),
+  icon: z.string().optional().nullable(),
+  href: z.string().optional().nullable(),
+  order: z.coerce.number().int().min(0, "A ordem deve ser um número positivo"),
+  parentId: z.string().optional().nullable(),
+  showInMenu: z.coerce.boolean().default(true),
+  permissionId: z.string().optional().nullable(),
+});
 
 /**
  * Atualizar um item de menu existente
@@ -11,7 +23,7 @@ import { requireAdmin, logAudit, menuItemSchema } from "./utils";
 export async function updateMenuItem(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requireAdmin();
+    const user = await requirePermission("menu.manage");
     
     // Extrair ID do item
     const id = formData.get("id") as string;
@@ -39,6 +51,9 @@ export async function updateMenuItem(formData: FormData) {
       if (key !== "id") {
         if (key === "showInMenu") {
           rawData[key] = value === "true";
+        } else if (key === "parentId" || key === "permissionId") {
+          // Tratar valores especiais
+          rawData[key] = value === "none" ? null : (typeof value === 'string' ? value : null);
         } else if (typeof value === 'string') {
           rawData[key] = value;
         } else {
@@ -72,16 +87,15 @@ export async function updateMenuItem(formData: FormData) {
     await logAudit(
       user.id,
       "menu.update",
-      `Item de menu "${updatedMenuItem.label}" atualizado`,
+      `Item de menu "${existingItem.label}" atualizado`,
       { 
         before: existingItem,
-        after: updatedMenuItem 
+        after: updatedMenuItem
       }
     );
     
     // Revalidar cache
-    revalidatePath("/dashboard/settings/menus");
-    revalidateTag("menu");
+    await invalidateCache("/dashboard/settings/menus");
     
     return {
       success: true,

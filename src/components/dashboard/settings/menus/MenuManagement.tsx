@@ -4,9 +4,12 @@ import { useState, useEffect } from "react";
 import { Permission, Resource, Action } from "@prisma/client";
 import { MenuTree } from "./MenuTree";
 import { MenuEditor } from "./MenuEditor";
+import { CreateMenuDialog } from "./CreateMenuDialog";
+import { EditMenuDialog } from "./EditMenuDialog";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Dialog } from "@/components/ui/dialog";
 
 // Tipagem forte para os itens de menu
 export interface MenuItemWithRelations {
@@ -49,6 +52,12 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
   
   // Estado para o modo de edição (criar ou editar)
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
+  
+  // Estado para controlar o diálogo de criação
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  // Estado para controlar o diálogo de edição
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Estado para o filtro de busca
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,31 +102,52 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
     setFilteredItems(filterItems([...menuItems]));
   }, [searchQuery, menuItems]);
   
-  // Função para abrir o editor para criar um novo item
-  const handleCreateItem = (parentId?: string) => {
-    setEditorMode("create");
-    setSelectedItem({
+  // Função para iniciar a criação de um novo item
+  function handleCreateItem() {
+    setIsCreateDialogOpen(true);
+  }
+  
+  // Função para iniciar a criação de um novo item com o editor completo
+  function handleCreateItemWithEditor() {
+    // Criar um item temporário vazio para o editor
+    const newItem: MenuItemWithRelations = {
       id: "",
       label: "",
-      order: getNextOrder(parentId),
+      icon: "",
+      href: "",
+      order: 0,
+      parentId: null,
       showInMenu: true,
-      parentId: parentId || null
-    } as MenuItemWithRelations);
+      permission: null,
+      parent: null,
+      children: []
+    };
+    
+    setSelectedItem(newItem);
+    setEditorMode("create");
     setIsEditorOpen(true);
   };
   
-  // Função para abrir o editor para editar um item existente
-  const handleEditItem = (item: MenuItemWithRelations) => {
-    setEditorMode("edit");
+  // Função para iniciar a edição de um item existente
+  function handleEditItem(item: MenuItemWithRelations) {
     setSelectedItem(item);
-    setIsEditorOpen(true);
+    setIsEditDialogOpen(true);
   };
   
   // Função para fechar o editor
-  const handleCloseEditor = () => {
+  function handleCloseEditor() {
     setIsEditorOpen(false);
     setSelectedItem(null);
-  };
+    
+    // Recarregar a lista de itens (na implementação real, isso seria feito via revalidação)
+    // fetchMenuItems();
+  }
+  
+  // Função para lidar com a criação bem-sucedida de um menu
+  function handleMenuCreated() {
+    // Recarregar a lista de itens (na implementação real, isso seria feito via revalidação)
+    // fetchMenuItems();
+  }
   
   // Função para obter a próxima ordem para um novo item
   const getNextOrder = (parentId?: string | null): number => {
@@ -176,6 +206,29 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
           menuItems={menuItems}
           onClose={handleCloseEditor}
         />
+      )}
+      
+      {/* Diálogo de criação rápida */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <CreateMenuDialog 
+          onMenuCreated={handleMenuCreated} 
+          setOpen={setIsCreateDialogOpen}
+          menuItems={menuItems}
+          permissions={permissions}
+        />
+      </Dialog>
+      
+      {/* Diálogo de edição */}
+      {selectedItem && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <EditMenuDialog 
+            item={selectedItem}
+            onMenuUpdated={handleMenuCreated} 
+            setOpen={setIsEditDialogOpen}
+            menuItems={menuItems.filter(item => item.id !== selectedItem.id)}
+            permissions={permissions}
+          />
+        </Dialog>
       )}
     </div>
   );

@@ -1,8 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { requireAdmin, logAudit } from "./utils";
+import { requirePermission } from "@/lib/services/require-permission.service";
+import { invalidateCache } from "@/lib/services/invalidate-user-cache.service";
+import { logAudit } from "@/lib/services/audit.service";
 
 /**
  * Excluir um item de menu
@@ -10,7 +11,7 @@ import { requireAdmin, logAudit } from "./utils";
 export async function deleteMenuItem(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requireAdmin();
+    const user = await requirePermission("menu.manage");
     
     // Extrair ID do item
     const id = formData.get("id") as string;
@@ -51,8 +52,7 @@ export async function deleteMenuItem(formData: FormData) {
     );
     
     // Revalidar cache
-    revalidatePath("/dashboard/settings/menus");
-    revalidateTag("menu");
+    await invalidateCache("/dashboard/settings/menus");
     
     return {
       success: true,

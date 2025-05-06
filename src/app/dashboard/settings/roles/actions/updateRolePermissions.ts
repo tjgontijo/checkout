@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requirePermission } from "@/lib/services/require-permission.service";
 import type { Prisma } from "@prisma/client";
 
 type TransactionClient = Prisma.TransactionClient;
@@ -70,6 +71,9 @@ export async function updateRolePermissions(formData: FormData) {
       return acc;
     }, {} as Record<string, string>);
     
+    // Recupera usuário autenticado para log
+    const user = await requirePermission("roles.update", "Você não tem permissão para atualizar permissões de perfis");
+
     // Transação para garantir atomicidade
     await prisma.$transaction(async (tx: TransactionClient) => {
       // Remover permissões
@@ -90,32 +94,24 @@ export async function updateRolePermissions(formData: FormData) {
               data: {
                 roleId: validatedData.roleId,
                 permissionId,
-                grantedBy: "system" // Idealmente, usar o ID do usuário logado
+                grantedBy: user.id
               }
             })
           )
         );
       }
-      
-      // Buscar um usuário válido para o audit log (primeira opção encontrada)
-      // Em produção, você deve usar o ID do usuário logado que está fazendo a alteração
-      const anyUser = await tx.user.findFirst();
-      
-      if (anyUser) {
-        // Registrar no audit log apenas se encontrar um usuário válido
-        await tx.auditLog.create({
-          data: {
-            action: "UPDATE_ROLE_PERMISSIONS",
-            description: `Permissões do perfil ${role.name} atualizadas`,
-            metadata: JSON.stringify({
-              added: permissionsToAdd.map((id: string) => permissionNames[id] || id),
-              removed: permissionsToRemove.map((id: string) => permissionNames[id] || id)
-            }),
-            userId: anyUser.id // Usando um ID válido de usuário
-          }
-        });
-      }
-      // Se não encontrar usuário, apenas pula o log de auditoria
+      // Registrar no audit log
+      await tx.auditLog.create({
+        data: {
+          action: "UPDATE_ROLE_PERMISSIONS",
+          description: `Permissões do perfil ${role.name} atualizadas`,
+          metadata: JSON.stringify({
+            added: permissionsToAdd.map((id: string) => permissionNames[id] || id),
+            removed: permissionsToRemove.map((id: string) => permissionNames[id] || id)
+          }),
+          userId: user.id
+        }
+      });
     });
     
     // Revalidar a página para atualizar os dados

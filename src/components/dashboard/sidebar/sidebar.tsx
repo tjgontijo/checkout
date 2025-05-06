@@ -8,10 +8,75 @@ import {
 } from "lucide-react"
 import { useMemo } from "react"
 import { useSidebar } from "@/providers/sidebar-provider"
+import { useSession } from "next-auth/react"
 import { getIconComponent } from "./menu"
 
 import { MenuItem } from "./menu";
 import { SidebarFooter } from "./footer";
+
+// Componente de Skeleton para a sidebar
+function SidebarSkeleton({ open = true }: { open?: boolean }) {
+  return (
+    <div 
+      className={`
+        flex flex-col h-full 
+        bg-zinc-50 dark:bg-gray-800 border-r rounded-lg shadow
+        transition-all duration-300 ease-in-out
+        ${open ? 'w-64' : 'w-16'}
+      `}
+    >
+      {/* Header Skeleton */}
+      <div className="flex items-center justify-between p-4 border-b">
+        {open ? (
+          <div className="flex items-center space-x-2">
+            <div className="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+            <div className="h-4 w-16 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+          </div>
+        ) : (
+          <div className="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto animate-pulse"></div>
+        )}
+        {open && (
+          <div className="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+        )}
+      </div>
+      
+      {/* Menu Items Skeleton */}
+      <div className={`flex-1 overflow-y-auto py-2 ${open ? 'px-3' : 'px-0'}`}>
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div 
+              key={index} 
+              className={`
+                flex items-center py-2 px-3 rounded-md
+                ${open ? '' : 'justify-center'}
+              `}
+            >
+              <div className="h-5 w-5 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+              {open && (
+                <div className="ml-3 h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Footer Skeleton */}
+      <div className="p-4 border-t">
+        {open ? (
+          <div className="flex items-center space-x-2">
+            <div className="h-10 w-10 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+            <div className="flex-1">
+              <div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded mb-1 animate-pulse"></div>
+              <div className="h-3 w-16 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-10 w-10 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto animate-pulse"></div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface SidebarProps {
   menuItems: MenuItem[];
@@ -19,8 +84,33 @@ interface SidebarProps {
 
 export function Sidebar({ menuItems }: SidebarProps) {
   const { open, toggleSidebar } = useSidebar();
+  const { data: session, status } = useSession();
+  // Estado para controlar se a sidebar está pronta para ser exibida
+  const [isReady, setIsReady] = React.useState(false);
+  
   // Garante que menuItems nunca será undefined
   const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+  
+  // No dashboard, sempre teremos um usuário autenticado (middleware garante isso)
+  // Mostramos a sidebar apenas quando a sessão estiver totalmente carregada
+  React.useEffect(() => {
+    // Consideramos a sessão totalmente carregada quando:
+    // 1. O status é 'authenticated' (autenticado)
+    // 2. Temos um objeto session válido
+    // 3. O objeto session tem a propriedade 'user'
+    // 4. O objeto user tem pelo menos uma propriedade (name, email, etc.)
+    if (
+      status === 'authenticated' && 
+      session && 
+      'user' in session && 
+      session.user && 
+      Object.keys(session.user).length > 0
+    ) {
+      // Pequeno delay para garantir estabilidade
+      const timer = setTimeout(() => setIsReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [session, status]);
 
   // Conteúdo do header
   const headerContent = useMemo(() => (
@@ -44,6 +134,12 @@ export function Sidebar({ menuItems }: SidebarProps) {
     </div>
   ), [open, toggleSidebar]);
 
+  // Se não estiver pronto, exibe o skeleton
+  if (!isReady) {
+    return <SidebarSkeleton open={open} />;
+  }
+  
+  // Quando estiver pronto, exibe a sidebar completa
   return (
     <div 
       className={`
@@ -71,20 +167,27 @@ interface MenuItemComponentProps {
   open: boolean;
 }
 
-function MenuItemComponent({ item, open }: MenuItemComponentProps) {
+// Componente memoizado para evitar renderizações desnecessárias 
+const MenuItemComponent = React.memo(function MenuItemComponent({ item, open }: MenuItemComponentProps) {
   const IconComponent = getIconComponent(item.icon);
   const hasChildren = item.children && item.children.length > 0;
+  
+  // Memoização do cálculo de classes CSS para evitar recalcular em cada renderização
+  const linkClassName = React.useMemo(() => {
+    return `
+      flex items-center py-2 px-3 rounded-md
+      text-sm font-medium text-gray-700 dark:text-gray-200
+      hover:bg-gray-100 dark:hover:bg-gray-700 
+      transition-colors duration-200
+      ${open ? '' : 'justify-center'}
+    `;
+  }, [open]);
+  
   return (
-    <div key={item.id}>
+    <div> {/* Removida a key redundante, pois já é fornecida pelo map no componente pai */}
       <Link
         href={item.href}
-        className={`
-          flex items-center py-2 px-3 rounded-md
-          text-sm font-medium text-gray-700 dark:text-gray-200
-          hover:bg-gray-100 dark:hover:bg-gray-700 
-          transition-colors duration-200
-          ${open ? '' : 'justify-center'}
-        `}
+        className={linkClassName}
       >
         <IconComponent className="h-5 w-5 text-primary" />
         {open && <span className="ml-3 truncate">{item.label}</span>}
@@ -113,4 +216,4 @@ function MenuItemComponent({ item, open }: MenuItemComponentProps) {
       )}
     </div>
   );
-}
+});

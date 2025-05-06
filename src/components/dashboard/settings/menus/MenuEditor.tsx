@@ -274,7 +274,7 @@ export function MenuEditor({ mode, item, permissions, menuItems, onClose }: Menu
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum (item raiz)</SelectItem>
+                        <SelectItem value="none">Nenhum (item raiz)</SelectItem>
                         {availableParents.map(parent => (
                           <SelectItem key={parent.id} value={parent.id}>
                             {parent.label}
@@ -329,7 +329,7 @@ export function MenuEditor({ mode, item, permissions, menuItems, onClose }: Menu
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma (público)</SelectItem>
+                        <SelectItem value="none">Nenhuma (público)</SelectItem>
                         {permissions.map(permission => (
                           <SelectItem key={permission.id} value={permission.id}>
                             {permission.resource?.name || ""}.{permission.action?.name || ""} - {permission.description}

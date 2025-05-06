@@ -2,7 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { requirePermission, logAudit, invalidateUserCache } from "./utils";
+import { requirePermission } from "@/lib/services/require-permission.service";
+import { logAudit } from "@/lib/services/audit.service";
+import { invalidateCache } from "@/lib/services/invalidate-user-cache.service";
 
 // Schema de validação para exclusão de usuário
 const deleteUserSchema = z.object({
@@ -63,7 +65,7 @@ export async function deleteUser(formData: FormData) {
       }
     );
     
-    invalidateUserCache();
+    await invalidateCache("/dashboard/settings/users");
     
     return { 
       success: true, 

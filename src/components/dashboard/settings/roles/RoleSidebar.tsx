@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Role, Permission, Resource, Action } from "@prisma/client";
 import { Search, Plus, Edit, Trash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CreateRoleDialog } from "./CreateRoleDialog";
+import { DeleteRoleDialog } from "./DeleteRoleDialog";
+import { EditRoleDialog } from "./EditRoleDialog";
 
 // Tipagem forte para as props
 interface RoleWithPermissions extends Role {
@@ -26,6 +31,35 @@ interface RoleSidebarProps {
 export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebarProps) {
   // Estado para filtro de busca
   const [searchQuery, setSearchQuery] = useState("");
+  // Estado para feedback - usado para exibir mensagens de sucesso/erro
+
+
+  // Estado dos Dialogs
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<RoleWithPermissions | null>(null);
+  const [roleToEdit, setRoleToEdit] = useState<RoleWithPermissions | null>(null);
+
+  // Atualiza a página ao criar/excluir/editar role
+  function handleRoleCreated() {
+    toast({
+      title: "Perfil criado com sucesso!",
+      variant: "default"
+    });
+  }
+  function handleRoleDeleted() {
+    toast({
+      title: "Perfil excluído com sucesso!",
+      variant: "default"
+    });
+  }
+  function handleRoleUpdated() {
+    toast({
+      title: "Perfil atualizado com sucesso!",
+      variant: "default"
+    });
+  }
 
   // Filtra as roles com base na busca
   const filteredRoles = roles.filter(role => 
@@ -39,10 +73,27 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2 mb-4">
           <h2 className="text-lg font-semibold">Perfis</h2>
-          <Button variant="outline" size="icon" className="ml-auto">
-            <Plus className="h-4 w-4" />
-            <span className="sr-only">Adicionar perfil</span>
-          </Button>
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon" className="ml-auto">
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">Adicionar perfil</span>
+              </Button>
+            </DialogTrigger>
+            <CreateRoleDialog 
+              onRoleCreated={handleRoleCreated} 
+              setErrorMsg={(msg: string | null) => {
+                if (msg) {
+                  toast({
+                    title: "Erro ao criar perfil",
+                    description: msg,
+                    variant: "destructive"
+                  });
+                }
+              }} 
+              setOpen={setCreateDialogOpen} 
+            />
+          </Dialog>
         </div>
         
         <div className="relative">
@@ -80,11 +131,29 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
                   
                   {/* Ações (visíveis apenas no hover) */}
                   <div className="hidden group-hover:flex items-center space-x-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRoleToEdit(role);
+                        setEditDialogOpen(true);
+                      }}
+                    >
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Editar</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRoleToDelete(role);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
                       <Trash className="h-4 w-4" />
                       <span className="sr-only">Excluir</span>
                     </Button>
@@ -99,6 +168,48 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DeleteRoleDialog 
+          roleToDelete={roleToDelete} 
+          onRoleDeleted={() => {
+            handleRoleDeleted();
+            setDeleteDialogOpen(false);
+          }} 
+          setErrorMsg={(msg: string | null) => {
+            if (msg) {
+              toast({
+                title: "Erro ao excluir perfil",
+                description: msg,
+                variant: "destructive"
+              });
+            }
+          }} 
+          setOpen={setDeleteDialogOpen} 
+        />
+      </Dialog>
+
+      {/* Modal de edição de role */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <EditRoleDialog 
+          roleToEdit={roleToEdit} 
+          onRoleUpdated={() => {
+            handleRoleUpdated();
+            setEditDialogOpen(false);
+          }} 
+          setErrorMsg={(msg: string | null) => {
+            if (msg) {
+              toast({
+                title: "Erro ao editar perfil",
+                description: msg,
+                variant: "destructive"
+              });
+            }
+          }} 
+          setOpen={setEditDialogOpen} 
+        />
+      </Dialog>
     </div>
   );
 }

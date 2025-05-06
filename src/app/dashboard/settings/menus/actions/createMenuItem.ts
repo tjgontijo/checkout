@@ -1,9 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
-import { requireAdmin, logAudit } from "./utils";
+import { requirePermission } from "@/lib/services/require-permission.service";
+import { invalidateCache } from "@/lib/services/invalidate-user-cache.service";
+import { logAudit } from "@/lib/services/audit.service";
 
 // Schema de validação para criação de itens de menu
 const menuItemSchema = z.object({
@@ -20,15 +21,19 @@ const menuItemSchema = z.object({
  * Criar um novo item de menu
  */
 export async function createMenuItem(formData: FormData) {
+  console.log("Iniciando criação de item de menu. Dados recebidos:", formData);
+  const rawData: Record<string, string | boolean | null> = {};
   try {
     // Verificar permissões
-    const user = await requireAdmin(); // user agora possui id, email, fullName, etc. Tipagem consistente com o schema.prisma
+    const user = await requirePermission("menuItems.create");
     
     // Extrair e validar dados
-    const rawData: Record<string, string | boolean | null> = {};
     formData.forEach((value, key) => {
       if (key === "showInMenu") {
         rawData[key] = value === "true";
+      } else if (key === "parentId" || key === "permissionId") {
+        // Tratar valores especiais
+        rawData[key] = value === "none" ? null : (typeof value === 'string' ? value : null);
       } else if (typeof value === 'string') {
         rawData[key] = value;
       } else {
@@ -65,8 +70,7 @@ export async function createMenuItem(formData: FormData) {
     );
     
     // Revalidar cache
-    revalidatePath("/dashboard/settings/menus");
-    revalidateTag("menu");
+    await invalidateCache("/dashboard/settings/menus");
     
     return {
       success: true,
@@ -74,7 +78,7 @@ export async function createMenuItem(formData: FormData) {
       data: newMenuItem
     };
   } catch (error: unknown) {
-    console.error("Erro ao criar item de menu:", error);
+    console.error("Erro detalhado ao criar item de menu:", error instanceof Error ? error.message : String(error), "Dados de entrada:", rawData ? rawData : 'Não disponível');
     
     if (error instanceof z.ZodError) {
       return {

@@ -1,9 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { requireAdmin, logAudit } from "./utils";
 import { z } from "zod";
+import { requirePermission } from "@/lib/services/require-permission.service";
+import { invalidateCache } from "@/lib/services/invalidate-user-cache.service";
+import { logAudit } from "@/lib/services/audit.service";
 
 // Schema para validação da reordenação
 const reorderSchema = z.object({
@@ -19,7 +20,7 @@ const reorderSchema = z.object({
 export async function reorderMenuItems(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requireAdmin();
+    const user = await requirePermission("menu.manage");
     
     // Extrair dados
     const itemsJson = formData.get("items") as string;
@@ -40,19 +41,18 @@ export async function reorderMenuItems(formData: FormData) {
     );
     
     // Executar todas as atualizações em uma transação
-    await prisma.$transaction(updates);
+    const updatedItems = await prisma.$transaction(updates);
     
     // Registrar no log de auditoria
     await logAudit(
       user.id,
       "menu.reorder",
-      "Itens de menu reordenados",
-      { items: items.items }
+      `Ordem dos itens de menu atualizada`,
+      { items: updatedItems }
     );
     
     // Revalidar cache
-    revalidatePath("/dashboard/settings/menus");
-    revalidateTag("menu");
+    await invalidateCache("/dashboard/settings/menus");
     
     return {
       success: true,
