@@ -6,10 +6,9 @@ import { MenuTree } from "./MenuTree";
 import { MenuEditor } from "./MenuEditor";
 import { CreateMenuDialog } from "./CreateMenuDialog";
 import { EditMenuDialog } from "./EditMenuDialog";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { MenuToolbar } from "./MenuToolbar";
+import { reorderMenuItems } from "@/app/dashboard/settings/menus/actions";
 
 // Tipagem forte para os itens de menu
 export interface MenuItemWithRelations {
@@ -107,26 +106,6 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
     setIsCreateDialogOpen(true);
   }
   
-  // Função para iniciar a criação de um novo item com o editor completo
-  function handleCreateItemWithEditor() {
-    // Criar um item temporário vazio para o editor
-    const newItem: MenuItemWithRelations = {
-      id: "",
-      label: "",
-      icon: "",
-      href: "",
-      order: 0,
-      parentId: null,
-      showInMenu: true,
-      permission: null,
-      parent: null,
-      children: []
-    };
-    
-    setSelectedItem(newItem);
-    setEditorMode("create");
-    setIsEditorOpen(true);
-  };
   
   // Função para iniciar a edição de um item existente
   function handleEditItem(item: MenuItemWithRelations) {
@@ -168,25 +147,59 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
     }
   };
   
+  // Flatten menu tree para operações
+  function flattenItems(items: MenuItemWithRelations[]): MenuItemWithRelations[] {
+    return items.reduce<MenuItemWithRelations[]>((acc, cur) => [
+      ...acc,
+      cur,
+      ...(cur.children ? flattenItems(cur.children) : []),
+    ], []);
+  }
+  
+  // Função para reordenar itens (subir)
+  async function handleMoveUp(item: MenuItemWithRelations) {
+    const all = flattenItems(menuItems);
+    const siblings = all.filter(mi => mi.parentId === item.parentId).sort((a,b) => (a.order||0) - (b.order||0));
+    const index = siblings.findIndex(mi => mi.id === item.id);
+    if (index <= 0) return;
+    const above = siblings[index-1];
+    // trocar ordens
+    const updated = [
+      { id: item.id, order: (above.order||0) },
+      { id: above.id, order: (item.order||0) }
+    ];
+    const fd = new FormData(); fd.append('items', JSON.stringify({ items: updated }));
+    const res = await reorderMenuItems(fd);
+    if (res.success) toast.success(res.message);
+    else toast.error(res.message);
+    // atualizar lista
+    // aqui pode revalidação
+  }
+  
+  // mover para baixo
+  async function handleMoveDown(item: MenuItemWithRelations) {
+    const all = flattenItems(menuItems);
+    const siblings = all.filter(mi => mi.parentId === item.parentId).sort((a,b) => (a.order||0) - (b.order||0));
+    const index = siblings.findIndex(mi => mi.id === item.id);
+    if (index === -1 || index >= siblings.length-1) return;
+    const below = siblings[index+1];
+    const updated = [
+      { id: item.id, order: (below.order||0) },
+      { id: below.id, order: (item.order||0) }
+    ];
+    const fd = new FormData(); fd.append('items', JSON.stringify({ items: updated }));
+    const res = await reorderMenuItems(fd);
+    if (res.success) toast.success(res.message);
+    else toast.error(res.message);
+  }
+  
   return (
     <div className="flex flex-col space-y-4">
-      {/* Barra de ações */}
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar itens de menu..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        <Button onClick={() => handleCreateItem()} className="ml-auto">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Item
-        </Button>
-      </div>
+      <MenuToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onCreate={handleCreateItem}
+      />
       
       {/* Árvore de menus */}
       <div className="border rounded-md">
@@ -194,6 +207,8 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
           items={filteredItems} 
           onEditItem={handleEditItem}
           onCreateItem={handleCreateItem}
+          onMoveUp={handleMoveUp}
+          onMoveDown={handleMoveDown}
         />
       </div>
       

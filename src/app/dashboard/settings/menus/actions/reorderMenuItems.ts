@@ -20,7 +20,7 @@ const reorderSchema = z.object({
 export async function reorderMenuItems(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requirePermission("menu.manage");
+    const user = await requirePermission("menuItems.update");
     
     // Extrair dados
     const itemsJson = formData.get("items") as string;

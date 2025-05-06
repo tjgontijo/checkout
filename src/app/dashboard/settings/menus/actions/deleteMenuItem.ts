@@ -11,7 +11,7 @@ import { logAudit } from "@/lib/services/audit.service";
 export async function deleteMenuItem(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requirePermission("menu.manage");
+    const user = await requirePermission("menuItems.delete");
     
     // Extrair ID do item
     const id = formData.get("id") as string;

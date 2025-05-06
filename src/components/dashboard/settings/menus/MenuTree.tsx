@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { MenuItemWithRelations } from "./MenuManagement";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, Edit, Trash, Plus, MoveUp, MoveDown, EyeOff, Lock } from "lucide-react";
+import { ChevronRight, ChevronDown, Edit, Trash, MoveUp, MoveDown, EyeOff, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface MenuTreeProps {
   items: MenuItemWithRelations[];
   onEditItem: (item: MenuItemWithRelations) => void;
-  onCreateItem: (parentId?: string) => void;
+  onMoveUp: (item: MenuItemWithRelations) => void;
+  onMoveDown: (item: MenuItemWithRelations) => void;
 }
 
-export function MenuTree({ items, onEditItem, onCreateItem }: MenuTreeProps) {
+export function MenuTree({ items, onEditItem, onMoveUp, onMoveDown }: MenuTreeProps) {
   // Estado para controlar quais nós estão expandidos
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   
@@ -87,15 +88,7 @@ export function MenuTree({ items, onEditItem, onCreateItem }: MenuTreeProps) {
           
           {/* Ações */}
           <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onCreateItem(item.id)}
-              aria-label="Adicionar subitem"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            {/* Botão de adicionar subitem removido para manter apenas o botão principal */}
             <Button
               variant="ghost"
               size="icon"
@@ -118,7 +111,7 @@ export function MenuTree({ items, onEditItem, onCreateItem }: MenuTreeProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => toast.info('Funcionalidade de reordenação será implementada em breve')}
+              onClick={() => onMoveUp(item)}
               aria-label="Mover para cima"
             >
               <MoveUp className="h-4 w-4" />
@@ -127,7 +120,7 @@ export function MenuTree({ items, onEditItem, onCreateItem }: MenuTreeProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => toast.info('Funcionalidade de reordenação será implementada em breve')}
+              onClick={() => onMoveDown(item)}
               aria-label="Mover para baixo"
             >
               <MoveDown className="h-4 w-4" />

@@ -23,7 +23,7 @@ const menuItemSchema = z.object({
 export async function updateMenuItem(formData: FormData) {
   try {
     // Verificar permissões
-    const user = await requirePermission("menu.manage");
+    const user = await requirePermission("menuItems.update");
     
     // Extrair ID do item
     const id = formData.get("id") as string;

@@ -28,24 +28,14 @@ interface EditMenuDialogProps {
 }
 
 export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permissions }: EditMenuDialogProps) {
+  // Estados inicializados com valores vazios
   const [loading, setLoading] = useState(false);
-  const [label, setLabel] = useState(item.label || "");
-  const [icon, setIcon] = useState(item.icon || "");
-  const [href, setHref] = useState(item.href || "");
-  const [parentId, setParentId] = useState(item.parentId || "none");
-  const [showInMenu, setShowInMenu] = useState(item.showInMenu);
+  const [label, setLabel] = useState("");
+  const [icon, setIcon] = useState("");
+  const [href, setHref] = useState("");
+  const [parentId, setParentId] = useState("none");
+  const [showInMenu, setShowInMenu] = useState(true);
   const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
-  
-  // Efeito para inicializar o recurso selecionado quando as permissões são carregadas
-  useEffect(() => {
-    if (item.permission?.id && permissions.length > 0) {
-      // Encontrar a permissão do item
-      const itemPermission = permissions.find(p => p.id === item.permission?.id);
-      if (itemPermission?.resource?.id) {
-        setSelectedResourceId(itemPermission.resource.id);
-      }
-    }
-  }, [item.permission, permissions]);
   
   // Lista de recursos únicos
   const [resources, setResources] = useState<Resource[]>([]);
@@ -54,6 +44,14 @@ export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permis
   
   // Exemplos de ícones comuns
   const iconExamples = "home, settings, users, shopping-cart, file-text";
+  
+  // Inicialização explícita dos campos básicos
+  useEffect(() => {
+    setLabel(item.label || "");
+    setIcon(item.icon || "");
+    setHref(item.href || "");
+    setShowInMenu(!!item.showInMenu);
+  }, [item]);
   
   // Extrair recursos únicos e mapear para permissões de visualização
   useEffect(() => {
@@ -78,23 +76,66 @@ export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permis
     setResourceViewPermissions(viewPermissionsMap);
   }, [permissions]);
 
-  // Filtrar itens de menu disponíveis para serem pais (evitar ciclos)
-  const availableParents = menuItems.filter(menuItem => 
-    // Não pode ser o próprio item
-    menuItem.id !== item.id && 
-    // Não pode ser um descendente do item atual
-    !isDescendant(menuItem, item.id)
-  );
-  
-  // Efeito para verificar se o parentId está na lista de disponíveis
+  // Inicialização do recurso
   useEffect(() => {
-    if (item.parentId) {
-      // Verificar se o pai atual está na lista de disponíveis
-      const parentExists = availableParents.some(p => p.id === item.parentId);
-      // Se existir, use-o; caso contrário, defina como "none"
-      setParentId(parentExists ? item.parentId : "none");
+    if (!item.permission?.id || permissions.length === 0) {
+      return;
     }
-  }, [item.parentId, availableParents]);
+    
+    // Primeiro tentamos obter o recurso diretamente
+    if (item.permission.resource?.id) {
+      setSelectedResourceId(item.permission.resource.id);
+      return;
+    }
+    
+    // Caso contrário, buscamos na lista de permissões
+    const itemPermission = permissions.find(p => p.id === item.permission?.id);
+    if (itemPermission?.resource?.id) {
+      setSelectedResourceId(itemPermission.resource.id);
+    } else {
+      setSelectedResourceId(null);
+    }
+  }, [item.permission, permissions]);
+
+  // Filtrar itens de menu disponíveis para serem pais (evitar ciclos)
+  const availableParents = menuItems.filter(menuItem => {
+    // Se for o pai atual, sempre inclui
+    if (item.parentId && menuItem.id === item.parentId) {
+      return true;
+    }
+    
+    // Não pode ser o próprio item
+    if (menuItem.id === item.id) {
+      return false;
+    }
+    
+    // Não pode ser um descendente do item atual
+    if (isDescendant(menuItem, item.id)) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Inicialização do parentId
+  useEffect(() => {
+    if (!menuItems.length) {
+      return;
+    }
+    
+    if (!item.parentId) {
+      setParentId("none");
+      return;
+    }
+    
+    const parentExists = menuItems.some(p => p.id === item.parentId);
+    
+    if (parentExists) {
+      setParentId(item.parentId);
+    } else {
+      setParentId("none");
+    }
+  }, [item.parentId, menuItems]);
 
   // Função para verificar se um item é descendente de outro
   function isDescendant(menuItem: MenuItemWithRelations, targetId: string): boolean {
@@ -116,6 +157,8 @@ export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permis
     formData.append("href", href);
     formData.append("parentId", parentId);
     formData.append("showInMenu", showInMenu.toString());
+    // Garantir que 'order' seja enviado para evitar NaN no lado do servidor
+    formData.append("order", (item.order ?? 0).toString());
     
     // Obter a permissão de visualização para o recurso selecionado, ou "none" se nenhum recurso for selecionado
     const viewPermissionId = selectedResourceId 
@@ -264,7 +307,6 @@ export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permis
             Mostrar no menu
           </label>
         </div>
-        
         <DialogFooter>
           <Button type="submit" disabled={loading}>
             {loading ? "Salvando..." : "Salvar alterações"}
