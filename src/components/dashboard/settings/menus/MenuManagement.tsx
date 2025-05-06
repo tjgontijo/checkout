@@ -182,8 +182,8 @@ export function MenuManagement({ menuItems, permissions }: MenuManagementProps) 
       
       {/* Árvore de menus */}
       <div className="border rounded-md">
-        <MenuTree 
-          items={filteredItems} 
+        <MenuTree
+          items={filteredItems}
           onEditItem={handleEditItem}
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
