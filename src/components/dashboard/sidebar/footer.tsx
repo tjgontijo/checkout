@@ -1,16 +1,21 @@
-
-
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { signOut, useSession } from "next-auth/react"
+import { useSidebar, UserInfo } from "@/providers/sidebar-provider"
 import { 
   LogOut, 
   User as UserIcon, 
   Settings, 
   HelpCircle,
-  MoreVertical 
+  MoreVertical,
+  Palette,
+  ChevronRight,
+  Sun,
+  Moon,
+  Monitor
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTheme } from "next-themes"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -24,17 +29,41 @@ interface SidebarFooterProps {
   open: boolean;
 }
 
+// Componente para alternar entre temas
+function TemaSwitcher() {
+  const { setTheme } = useTheme()
+
+  return (
+    <>
+      <DropdownMenuItem onClick={() => setTheme("light")}>
+        <Sun className="mr-2 h-4 w-4" />
+        <span>Claro</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <Moon className="mr-2 h-4 w-4" />
+        <span>Escuro</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setTheme("system")}>
+        <Monitor className="mr-2 h-4 w-4" />
+        <span>Sistema</span>
+      </DropdownMenuItem>
+    </>
+  )
+}
+
 export function SidebarFooter({ open }: SidebarFooterProps) {
   // Usar useSession para obter dados da sessão
   const { data: session, status } = useSession()
+  // Usar useSidebar para obter/atualizar informações do usuário
+  const { userInfo, isUserLoading, updateUserInfo } = useSidebar()
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   
   // Estado para controlar quando a sessão está totalmente carregada
   const [isSessionFullyLoaded, setIsSessionFullyLoaded] = useState(false)
   
-  // Monitora a sessão para detectar quando está totalmente carregada
-  React.useEffect(() => {
+  // Monitora a sessão para detectar quando está totalmente carregada e atualiza o cache
+  useEffect(() => {
     // Consideramos a sessão totalmente carregada quando:
     // 1. O status é 'authenticated' (autenticado)
     // 2. Temos um objeto session válido
@@ -48,43 +77,69 @@ export function SidebarFooter({ open }: SidebarFooterProps) {
       Object.keys(session.user).length > 0
     ) {
       // Pequeno delay para garantir estabilidade
-      const timer = setTimeout(() => setIsSessionFullyLoaded(true), 50);
+      const timer = setTimeout(() => {
+        setIsSessionFullyLoaded(true)
+        
+        // Atualizar as informações do usuário no provider e localStorage
+        if (session.user) {
+          const userInfoData: UserInfo = {
+            name: session.user.name || 'Usuário',
+            email: session.user.email || 'Sem email',
+            image: session.user.image || undefined,
+            permissions: session.user.permissions as string[] || []
+          }
+          updateUserInfo(userInfoData)
+        }
+      }, 50);
       return () => clearTimeout(timer);
     }
-  }, [session, status]);
+  }, [session, status, updateUserInfo]);
   
   // Só mostra o conteúdo quando a sessão estiver totalmente carregada
-  const isLoading = !isSessionFullyLoaded;
+  const isLoading = !isSessionFullyLoaded || isUserLoading;
   
-  // Memoizar os dados do usuário para evitar recalcular a cada renderização
-  // No dashboard, sempre teremos um usuário autenticado (middleware garante isso)
+  // Usar dados do cache ou da sessão
   const userData = React.useMemo(() => {
+    // Priorizar dados do cache para carregamento rápido
+    if (userInfo) {
+      return userInfo;
+    }
+    
+    // Fallback para dados da sessão
     if (session && 'user' in session && session.user) {
       return {
         name: session.user.name || 'Usuário',
-        email: session.user.email || 'Sem email'
+        email: session.user.email || 'Sem email',
+        image: session.user.image || undefined
       };
     }
+    
     return {
       name: 'Usuário',
       email: 'Sem email'
     };
-  }, [session])
+  }, [session, userInfo])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Limpar chaves específicas do localStorage
     const keysToRemove = [
-      'menu-storage',  // Chave do menu
-      'sidebar-storage', // Chave do sidebar
-      // Adicione outras chaves que queira limpar no logout
+      'menu-storage',       // Chave do menu da sidebar
+      'sidebar-storage',    // Chave do estado da sidebar (aberta/fechada)
+      'user-storage',       // Chave das informações do usuário
+      'nextauth.message'    // Limpa mensagem de sessão do NextAuth
     ];
 
     keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
+      try {
+        localStorage.removeItem(key);
+      } catch (err) {
+        console.warn(`Erro ao remover ${key} do localStorage:`, err);
+      }
     });
 
     // Logout padrão
-    signOut({ callbackUrl: '/' })
+    await signOut({ redirect: false })
+    window.location.href = '/'
   }
   
   // Renderiza o skeleton do footer quando a sessão está carregando
@@ -156,6 +211,18 @@ export function SidebarFooter({ open }: SidebarFooterProps) {
             <HelpCircle className="mr-2 h-4 w-4" />
             <span>Ajuda</span>
           </DropdownMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="px-2 py-1.5 text-sm rounded-sm flex items-center cursor-pointer hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <Palette className="mr-2 h-4 w-4" />
+                <span>Tema</span>
+                <ChevronRight className="ml-auto h-4 w-4" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" className="w-36">
+              <TemaSwitcher />
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-red-600 focus:text-red-600 cursor-pointer" 
