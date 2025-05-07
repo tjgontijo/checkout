@@ -8,10 +8,10 @@ import {
 } from "lucide-react"
 import { useMemo } from "react"
 import { useSidebar } from "@/providers/sidebar-provider"
-import { useSession } from "next-auth/react"
-import { getIconComponent } from "./menu"
 
-import { MenuItem } from "./menu";
+
+
+import { MenuItem, getIconComponent } from "@/providers/sidebar-provider";
 import { SidebarFooter } from "./footer";
 
 // Componente de Skeleton para a sidebar
@@ -78,39 +78,14 @@ function SidebarSkeleton({ open = true }: { open?: boolean }) {
   );
 }
 
-interface SidebarProps {
-  menuItems: MenuItem[];
-}
+export function Sidebar() {
+  const { open, toggleSidebar, menuItems, isLoading } = useSidebar();
 
-export function Sidebar({ menuItems }: SidebarProps) {
-  const { open, toggleSidebar } = useSidebar();
-  const { data: session, status } = useSession();
-  // Estado para controlar se a sidebar está pronta para ser exibida
-  const [isReady, setIsReady] = React.useState(false);
   
   // Garante que menuItems nunca será undefined
   const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
   
-  // No dashboard, sempre teremos um usuário autenticado (middleware garante isso)
-  // Mostramos a sidebar apenas quando a sessão estiver totalmente carregada
-  React.useEffect(() => {
-    // Consideramos a sessão totalmente carregada quando:
-    // 1. O status é 'authenticated' (autenticado)
-    // 2. Temos um objeto session válido
-    // 3. O objeto session tem a propriedade 'user'
-    // 4. O objeto user tem pelo menos uma propriedade (name, email, etc.)
-    if (
-      status === 'authenticated' && 
-      session && 
-      'user' in session && 
-      session.user && 
-      Object.keys(session.user).length > 0
-    ) {
-      // Pequeno delay para garantir estabilidade
-      const timer = setTimeout(() => setIsReady(true), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [session, status]);
+
 
   // Conteúdo do header
   const headerContent = useMemo(() => (
@@ -134,8 +109,8 @@ export function Sidebar({ menuItems }: SidebarProps) {
     </div>
   ), [open, toggleSidebar]);
 
-  // Se não estiver pronto, exibe o skeleton
-  if (!isReady) {
+  // Se estiver carregando, exibe o skeleton
+  if (isLoading) {
     return <SidebarSkeleton open={open} />;
   }
   
