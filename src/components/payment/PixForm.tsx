@@ -1,9 +1,11 @@
 'use client';
 
-import type { PixPaymentResult } from '@/modules/payment/gateways/mercadopago/types';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Wallet, initMercadoPago } from '@mercadopago/sdk-react';
 import { Button } from '@/components/ui/button';
-import { ArrowRightIcon, QrCodeIcon } from 'lucide-react';
+import { QrCodeIcon, ArrowRight } from 'lucide-react';
+import { createPixPreference } from '@/modules/payment/gateways/mercadopago/actions/createPreference';
+import type { PixPaymentResult } from '@/modules/payment/gateways/mercadopago/types';
 
 interface PixFormProps {
   amount: number;
@@ -13,41 +15,41 @@ interface PixFormProps {
     whatsapp: string;
   };
   onPaymentCreate?: (paymentData: PixPaymentData) => Promise<void>;
+  publicKey: string;
 }
 
 export interface PixPaymentData {
   paymentMethod: string;
 }
 
-export function PixForm({ amount, customer, onPaymentCreate }: PixFormProps) {
+export function PixForm({ amount, customer, onPaymentCreate, publicKey }: PixFormProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<PixPaymentResult | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [preferenceId, setPreferenceId] = useState<string | null>(null);
+
+  // Inicializar o SDK do Mercado Pago
+  useEffect(() => {
+    if (publicKey) {
+      initMercadoPago(publicKey);
+    }
+  }, [publicKey]);
 
   const handleGeneratePix = async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
-    setResult(null);
+    setPreferenceId(null);
     try {
-      // Chamada para a API de pagamento
-      const response = await fetch('/api/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          currency: 'BRL',
+      // Usar a server action para criar a preferência
+      const newPreferenceId = await createPixPreference(amount, customer);
+      setPreferenceId(newPreferenceId);
+      
+      // Simular os dados de retorno para o onPaymentCreate
+      if (onPaymentCreate) {
+        const paymentData: PixPaymentData = {
           paymentMethod: 'pix',
-          payer: {
-            name: customer.name,
-            email: customer.email,
-          },
-        }),
-      });
-      const body = await response.json();
-      const paymentResult: PixPaymentResult = (body.raw ?? body) as PixPaymentResult;
-      setResult(paymentResult);
-      if (onPaymentCreate) await onPaymentCreate(paymentResult);
+        };
+        await onPaymentCreate(paymentData);
+      }
     } catch (error) {
       console.error('Erro ao gerar PIX:', error);
       setError(error instanceof Error ? error.message : 'Ocorreu um erro ao gerar o QR Code PIX');
@@ -56,17 +58,9 @@ export function PixForm({ amount, customer, onPaymentCreate }: PixFormProps) {
     }
   };
 
-  const handleCopy = () => {
-    if (result?.point_of_interaction?.transaction_data?.qr_code) {
-      navigator.clipboard.writeText(result.point_of_interaction.transaction_data.qr_code)
-        .then(() => setCopied(true))
-        .catch(() => setError('Não foi possível copiar o código'));
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {!result && (
+      {!preferenceId && (
         <div className="flex flex-col items-center justify-center p-6 bg-muted/20 rounded-lg border border-dashed border-muted-foreground/30">
           <QrCodeIcon className="h-12 w-12 text-primary mb-4" />
           <h3 className="text-lg font-medium mb-2">Pagamento instantâneo via PIX</h3>
@@ -82,7 +76,7 @@ export function PixForm({ amount, customer, onPaymentCreate }: PixFormProps) {
             {isLoading ? (
               <>Gerando QR Code...</>
             ) : (
-              <>Gerar QR Code PIX <ArrowRightIcon className="ml-2 h-5 w-5" /></>
+              <>Gerar QR Code PIX <ArrowRight className="ml-2 h-5 w-5" /></>
             )}
           </Button>
         </div>
@@ -93,25 +87,10 @@ export function PixForm({ amount, customer, onPaymentCreate }: PixFormProps) {
         </div>
       )}
       
-      {result && (
-        <div className="p-4 bg-white rounded-lg border mb-4">
-          <h4 className="font-medium mb-2">Seu QR Code PIX</h4>
-          {result.point_of_interaction?.transaction_data?.qr_code_base64 && (
-            <img src={`data:image/png;base64,${result.point_of_interaction.transaction_data.qr_code_base64}`} alt="PIX QR Code" className="mx-auto mb-4" />
-          )}
-          {result.point_of_interaction?.transaction_data?.qr_code && (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Código PIX (copia e cola):</label>
-                <div className="p-2 bg-gray-100 rounded text-sm break-all">
-                  {result.point_of_interaction.transaction_data.qr_code}
-                </div>
-              </div>
-              <Button onClick={handleCopy} size="sm" disabled={copied} className="mb-4">
-                {copied ? 'Copiado!' : 'Copiar código PIX'}
-              </Button>
-            </>
-          )}
+      {preferenceId && (
+        <div className="mb-4">
+          <h4 className="font-medium mb-2 text-center">Seu QR Code PIX</h4>
+          <Wallet initialization={{ preferenceId }} />
         </div>
       )}
       <div className="rounded-lg border p-4">

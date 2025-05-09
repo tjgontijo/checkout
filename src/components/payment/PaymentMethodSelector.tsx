@@ -6,7 +6,6 @@ import { PixForm, PixPaymentData } from './PixForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PaymentMethodSelectorProps {
-  publicKey: string;
   amount: number;
   customer: {
     name: string;
@@ -17,14 +16,19 @@ interface PaymentMethodSelectorProps {
   onPixPaymentCreate: (paymentData: PixPaymentData) => Promise<void>;
 }
 
+function getMercadoPagoPublicKey(): string {
+  // Next.js: variáveis públicas precisam começar com NEXT_PUBLIC_
+  return process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY ?? '';
+}
+
 export function PaymentMethodSelector({
-  publicKey,
   amount,
   customer,
   onCardPaymentCreate,
   onPixPaymentCreate
 }: PaymentMethodSelectorProps) {
-  const [selectedMethod, setSelectedMethod] = useState<string>('card');
+  const publicKey = getMercadoPagoPublicKey();
+  const [selectedMethod, setSelectedMethod] = useState<string>('pix');
 
   return (
     <Tabs defaultValue="card" className="w-full" onValueChange={setSelectedMethod}>
@@ -57,7 +61,8 @@ export function PaymentMethodSelector({
         <PixForm 
           amount={amount}
           customer={customer}
-          onPaymentCreate={onPixPaymentCreate} 
+          onPaymentCreate={onPixPaymentCreate}
+          publicKey={publicKey} 
         />
       </TabsContent>
     </Tabs>

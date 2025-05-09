@@ -1,5 +1,5 @@
 import { IPaymentGatewayService, CreatePaymentParams, PaymentResult } from '../../interfaces/IPaymentGatewayService';
-import { MercadoPagoConfig, MercadoPagoPaymentResponse } from './types';
+import { MercadoPagoConfig, MercadoPagoPaymentResponse, CreatePreferenceParams } from './types';
 import { normalizePaymentStatus, formatName } from './utils';
 import { randomUUID } from 'crypto';
 
@@ -67,5 +67,27 @@ export class MercadoPagoService implements IPaymentGatewayService {
       console.error('Erro ao processar pagamento com Mercado Pago:', error);
       throw error;
     }
+  }
+
+  /**
+   * Cria uma preferência de checkout (PIX) e retorna o preferenceId
+   */
+  async createPreference(params: CreatePreferenceParams): Promise<string> {
+    const idempotencyKey = randomUUID();
+    const response = await fetch(`${this.apiBaseUrl}/checkout/preferences`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey
+      },
+      body: JSON.stringify(params)
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(`Erro ao criar preferência: ${JSON.stringify(err)}`);
+    }
+    const data = await response.json();
+    return data.id;
   }
 }
