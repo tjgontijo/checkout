@@ -39,7 +39,7 @@ export class WhatsappService {
   private instance: string;
 
   constructor() {    
-    this.apiKey = process.env.APIKEY_EVOLUTION || '7856EE25D338-4F33-846F-D8D10DAF2B15';
+    this.apiKey = process.env.APIKEY_EVOLUTION || 'B37B2EA91D67-4F2C-8F69-4EC2A35A5D4E';
     this.baseUrl = process.env.EVOLUTION_BASE_URL || 'https://evolution.elev8.com.br/';
     this.instance = process.env.INSTANCE_EVOLUTION || 'Thiago';
   }

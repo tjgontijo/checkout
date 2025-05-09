@@ -185,8 +185,7 @@ model Product {
   name            String
   description     String
   price           Float
-  priceCurrency   String   @default("BRL") // Multi-moeda
-  slug            String   @unique
+  priceCurrency   String   @default("BRL") // Multi-moeda  
   salesPageUrl    String
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -389,4 +388,95 @@ model WebhookLog {
   
   @@index([webhookId, success])
   @@index([event, sentAt])
+}
+
+model PaymentGateway {
+  id            String   @id @default(cuid())
+  name          String   @unique // "mercado_pago", "stripe", "pushin_pay"
+  displayName   String   // "Mercado Pago", "Stripe", "Pushin Pay"
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  affiliations  GatewayAffiliation[]
+  routes        PaymentRoute[]
+}
+
+model GatewayAffiliation {
+  id            String   @id @default(cuid())
+  affiliationName String  // Nome da afiliação (ex: "Conta Principal")
+  accessToken   String?
+  refreshToken  String?
+  expiresAt     DateTime?
+  gatewayUserId String?  // ID do usuário no gateway
+  metadata      Json?    // Dados específicos do gateway
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  gatewayId     String
+  gateway       PaymentGateway @relation(fields: [gatewayId], references: [id])
+  storeId       String?
+  store         Store?    @relation(fields: [storeId], references: [id])
+  
+  routes        PaymentRoute[]
+  
+  @@unique([gatewayId, affiliationName, storeId])
+}
+
+model PaymentMethod {
+  id            String   @id @default(cuid())
+  code          String   @unique // "credit_card", "pix", "boleto"
+  displayName   String   // "Cartão de Crédito", "PIX", "Boleto"
+  isActive      Boolean  @default(true)
+  
+  routes        PaymentRoute[]
+}
+
+model PaymentRoute {
+  id            String   @id @default(cuid())
+  currency      String   // "BRL", "USD"
+  isActive      Boolean  @default(true)
+  priority      Int      @default(1) // Para fallback
+  
+  methodId      String
+  method        PaymentMethod @relation(fields: [methodId], references: [id])
+  gatewayId     String
+  gateway       PaymentGateway @relation(fields: [gatewayId], references: [id])
+  affiliationId String
+  affiliation   GatewayAffiliation @relation(fields: [affiliationId], references: [id])
+  transactions PaymentTransaction[]
+  
+  @@unique([currency, methodId]) // Garante uma rota única por moeda+método  
+}
+
+model PaymentTransaction {
+  id                String   @id @default(cuid())
+  gatewayOrderId    String?  // ID da ordem no gateway
+  gatewayPaymentId  String?  // ID do pagamento no gateway
+  status            String   // "pending", "approved", "rejected"
+  amount            Decimal
+  currency          String   @default("BRL")
+  paymentMethod     String?  // "credit_card", "boleto", "pix"
+  paymentDetails    Json?    // Detalhes específicos do método (número de boleto, QR code, etc)
+  externalReference String?
+  webhookData       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relacionamentos a serem adicionados quando os modelos Order e Customer existirem
+  // orderId          String
+  // order            Order    @relation(fields: [orderId], references: [id])
+  
+  routeId          String?
+  route            PaymentRoute? @relation(fields: [routeId], references: [id])
+}
+
+model Store {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affiliations GatewayAffiliation[]
 }
