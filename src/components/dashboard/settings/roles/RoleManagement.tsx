@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Role, Permission, Resource, Action } from "@prisma/client";
-import { RoleSidebar } from "@/components/dashboard/settings/roles/RoleSidebar";
+import { RoleSidebar } from "./RoleSidebar";
 import { PermissionPanel } from "./PermissionPanel";
 
 // Tipagem forte para as props

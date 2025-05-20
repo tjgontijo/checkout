@@ -156,7 +156,7 @@ Cada evento enviado via webhook carrega um payload no formato JSON:
         nodemailer.service.ts
         send-email.ts
       /templates/
-        /auth/
+        /
           reset-password.template.ts
           set-initial-password.template.ts
           verification.template.ts

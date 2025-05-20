@@ -1,25 +1,15 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import { Toaster } from 'sonner'
 
-// Importar o Toaster dinamicamente para evitar problemas de hidratação
-const DynamicToaster = dynamic(
-  () => import('sonner').then((mod) => {
-    const { Toaster } = mod
-    return function ToasterWrapper(props: React.ComponentProps<typeof Toaster>) {
-      return (
-        <Toaster 
-          position="bottom-right"
-          closeButton
-          richColors
-          {...props} 
-        />
-      )
-    }
-  }),
-  { ssr: false } // Desabilitar SSR para este componente
-)
-
+// Utilizando o componente Toaster diretamente com a opção client-only
 export function ToasterProvider() {
-  return <DynamicToaster />;
+  return (
+    <Toaster
+      position="bottom-right"
+      closeButton
+      richColors
+      theme="light"
+    />
+  )
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createRole } from "@/app/dashboard/settings/roles/actions/createRole";
+import { createRole } from "@/app/(private)/settings/roles/actions/createRole";
 
 interface CreateRoleDialogProps {
   onRoleCreated: () => void;

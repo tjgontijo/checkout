@@ -100,10 +100,10 @@ export function MenuEditor({ mode, item, permissions, menuItems, onClose }: Menu
       let result;
       
       if (mode === "create") {
-        const { createMenuItem } = await import("@/app/dashboard/settings/menus/actions");
+        const { createMenuItem } = await import("@/app/(private)/settings/menus/actions");
         result = await createMenuItem(formData);
       } else {
-        const { updateMenuItem } = await import("@/app/dashboard/settings/menus/actions");
+        const { updateMenuItem } = await import("@/app/(private)/settings/menus/actions");
         result = await updateMenuItem(formData);
       }
       

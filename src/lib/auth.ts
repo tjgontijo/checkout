@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 dias
   },
   pages: {
-    signIn: '/auth/signin',
+    signIn: '/signin',
   },
   callbacks: {
     async jwt({ token, user }) {

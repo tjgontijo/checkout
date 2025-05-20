@@ -15,7 +15,7 @@ const menuItemsData = [
   {
     label: 'Produtos',
     icon: 'Package',
-    href: '/dashboard/products',
+    href: '/products',
     order: 2,
     showInMenu: true,
     permissionName: 'products.view'
@@ -23,7 +23,7 @@ const menuItemsData = [
   {
     label: 'Vendas',
     icon: 'ShoppingCart',
-    href: '/dashboard/sales',
+    href: '/sales',
     order: 3,
     showInMenu: true,
     permissionName: 'orders.view'
@@ -31,7 +31,7 @@ const menuItemsData = [
   {
     label: 'Clientes',
     icon: 'Users',
-    href: '/dashboard/customers',
+    href: '/customers',
     order: 4,
     showInMenu: true,
     permissionName: 'users.view'
@@ -39,7 +39,7 @@ const menuItemsData = [
   {
     label: 'Configurações',
     icon: 'Settings',
-    href: '/dashboard/settings',
+    href: '/settings',
     order: 5,
     showInMenu: true,
     permissionName: 'accessControl.view'
@@ -70,7 +70,7 @@ export async function seedMenuItems() {
 
     // Criar submenus de Vendas
     const salesMenu = await prisma.menuItem.findFirst({
-      where: { href: '/dashboard/sales' }
+      where: { href: '/sales' }
     });
     if (salesMenu) {
       const ordersPermission = await prisma.permission.findUnique({ where: { name: 'orders.view' } });
@@ -80,7 +80,7 @@ export async function seedMenuItems() {
           {
             label: 'Pedidos',
             icon: 'ClipboardList',
-            href: '/dashboard/sales/orders',
+            href: '/sales/orders',
             parentId: salesMenu.id,
             order: 1,
             showInMenu: true,
@@ -89,7 +89,7 @@ export async function seedMenuItems() {
           {
             label: 'Carrinhos Abandonados',
             icon: 'ShoppingBag',
-            href: '/dashboard/sales/abandoned-carts',
+            href: '/sales/abandoned-carts',
             parentId: salesMenu.id,
             order: 2,
             showInMenu: true,
@@ -101,7 +101,7 @@ export async function seedMenuItems() {
 
     // Criar submenus de Configurações
     const configMenu = await prisma.menuItem.findFirst({
-      where: { href: '/dashboard/settings' }
+      where: { href: '/settings' }
     });
     if (configMenu) {
       const lojaPermission = await prisma.permission.findUnique({ where: { name: 'preferences.view' } });
@@ -116,7 +116,7 @@ export async function seedMenuItems() {
           {
             label: 'Dados da loja',
             icon: 'Store',
-            href: '/dashboard/settings/store',
+            href: '/settings/store',
             parentId: configMenu.id,
             order: 1,
             showInMenu: true,
@@ -125,7 +125,7 @@ export async function seedMenuItems() {
           {
             label: 'E-mails transacionais',
             icon: 'Mail',
-            href: '/dashboard/settings/emails',
+            href: '/settings/emails',
             parentId: configMenu.id,
             order: 2,
             showInMenu: true,
@@ -134,7 +134,7 @@ export async function seedMenuItems() {
           {
             label: 'Formas de pagamento',
             icon: 'CreditCard',
-            href: '/dashboard/settings/payments',
+            href: '/settings/payments',
             parentId: configMenu.id,
             order: 3,
             showInMenu: true,
@@ -143,7 +143,7 @@ export async function seedMenuItems() {
           {
             label: 'Relatórios',
             icon: 'BarChart2',
-            href: '/dashboard/settings/reports',
+            href: '/settings/reports',
             parentId: configMenu.id,
             order: 4,
             showInMenu: true,
@@ -152,7 +152,7 @@ export async function seedMenuItems() {
           {
             label: 'Usuários',
             icon: 'User',
-            href: '/dashboard/settings/users',
+            href: '/settings/users',
             parentId: configMenu.id,
             order: 5,
             showInMenu: true,
@@ -161,7 +161,7 @@ export async function seedMenuItems() {
           {
             label: 'Controle de Acesso',
             icon: 'ShieldCheck',
-            href: '/dashboard/settings/roles',
+            href: '/settings/roles',
             parentId: configMenu.id,
             order: 6,
             showInMenu: true,
@@ -170,7 +170,7 @@ export async function seedMenuItems() {
           {
             label: 'Menus',
             icon: 'Menu',
-            href: '/dashboard/settings/menus',
+            href: '/settings/menus',
             parentId: configMenu.id,
             order: 6,
             showInMenu: true,
@@ -179,7 +179,7 @@ export async function seedMenuItems() {
           {
             label: 'Webhooks',
             icon: 'Link',
-            href: '/dashboard/settings/webhooks',
+            href: '/settings/webhooks',
             parentId: configMenu.id,
             order: 7,
             showInMenu: true,

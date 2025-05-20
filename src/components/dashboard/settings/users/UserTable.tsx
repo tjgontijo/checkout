@@ -18,8 +18,8 @@ import {
 import { User, Role } from "@prisma/client";
 
 // Componentes de tabela existentes
-import { DataTablePagination } from "@/components/dashboard/data-table/pagination";
-import { DataTableColumnHeader } from "@/components/dashboard/data-table/column-header";
+import { DataTablePagination } from "@/components/data-table/pagination";
+import { DataTableColumnHeader } from "@/components/data-table/column-header";
 
 // Componentes UI
 import { Input } from "@/components/ui/input";

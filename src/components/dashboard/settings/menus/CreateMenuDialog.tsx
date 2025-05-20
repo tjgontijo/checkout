@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createMenuItem } from "@/app/dashboard/settings/menus/actions";
+import { createMenuItem } from "@/app/(private)/settings/menus/actions";
 import { toast } from "sonner";
 import { MenuItemWithRelations, PermissionWithRelations } from "./MenuManagement";
 import { Resource } from "@prisma/client";
@@ -162,7 +162,7 @@ export function CreateMenuDialog({ onMenuCreated, setOpen, menuItems, permission
             id="menu-href"
             value={href}
             onChange={e => setHref(e.target.value)}
-            placeholder="Ex: /dashboard/settings"
+            placeholder="Ex: /settings"
             required
           />
         </div>

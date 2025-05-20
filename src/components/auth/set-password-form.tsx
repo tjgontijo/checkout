@@ -47,7 +47,7 @@ export function SetPasswordForm() {
     }
 
     try {
-      const response = await fetch('/api/auth/set-password', {
+      const response = await fetch('/api/set-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export function SetPasswordForm() {
       }
 
       toast.success('Senha definida com sucesso!')
-      window.location.href = '/auth/signin'
+      window.location.href = '/signin'
     } catch (error) {
       console.error(error)
       toast.error(error instanceof Error ? error.message : 'Erro ao definir senha')

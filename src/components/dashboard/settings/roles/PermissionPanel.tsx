@@ -121,7 +121,7 @@ export function PermissionPanel({ role, permissionsByResource }: PermissionPanel
       
       // Importa a Server Action dinamicamente
       // Caminho absoluto para evitar erros de importação
-      const { updateRolePermissions } = await import("@/app/dashboard/settings/roles/actions");
+      const { updateRolePermissions } = await import("@/app/(private)/settings/roles/actions");
       
       // Chama a Server Action
       const formData = new FormData();

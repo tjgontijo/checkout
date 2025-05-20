@@ -1,16 +1,41 @@
-import { PrismaClient } from '@prisma/client'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { MenuItem } from '@/components/dashboard/sidebar/menu'
+import { MenuItem } from '@/components/sidebar/menu'
 import { cache } from 'react'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+// Tempo de revalidação do cache em segundos (5 minutos)
+const REVALIDATION_TIME = 5 * 60
+
+// Cache para armazenar os itens de menu por até 5 minutos
+let menuCache: {
+  items: MenuItem[];
+  timestamp: number;
+} | null = null;
 
 /**
  * Server Component para buscar itens de menu do banco de dados baseado nas permissões do usuário.
  * Retorna o menu no formato esperado pelo componente de menu do frontend.
  */
+// Função auxiliar para verificar se o cache está válido
+function isCacheValid(): boolean {
+  if (!menuCache) return false;
+  
+  const now = Date.now();
+  const cacheAge = (now - menuCache.timestamp) / 1000; // em segundos
+  
+  return cacheAge < REVALIDATION_TIME;
+}
+
+// Função para buscar itens de menu com cache otimizado
 export const getMenuItems = cache(async (): Promise<MenuItem[]> => {
+  // Verificar se podemos usar o cache
+  if (isCacheValid()) {
+    console.log('Usando cache de menu (válido por 5 minutos)');
+    return menuCache!.items;
+  }
+  
+  console.log('Cache de menu expirado ou não existente, buscando do banco...');
   try {
     // Obter sessão do usuário com timeout para evitar bloqueios
     let session;
@@ -97,12 +122,17 @@ export const getMenuItems = cache(async (): Promise<MenuItem[]> => {
     
     // DEBUG: Exibir menu final mapeado
     console.log('Menu final mapeado para o frontend:', mappedMenuItems.map(i => ({id: i.id, label: i.label, filhos: i.children?.length, perms: i.requiredPermissions})))
+    
+    // Atualizar o cache
+    menuCache = {
+      items: mappedMenuItems,
+      timestamp: Date.now()
+    };
+    
     return mappedMenuItems
   } catch (error) {
     console.error('Erro ao buscar itens de menu:', error)
     return []
-  } finally {
-    await prisma.$disconnect()
   }
 })
 

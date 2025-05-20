@@ -8,7 +8,7 @@ import { CreateMenuDialog } from "./CreateMenuDialog";
 import { EditMenuDialog } from "./EditMenuDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { MenuToolbar } from "./MenuToolbar";
-import { reorderMenuItems } from "@/app/dashboard/settings/menus/actions";
+import { reorderMenuItems } from "@/app/(private)/settings/menus/actions";
 import { toast } from "sonner";
 
 // Tipagem forte para os itens de menu

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Role } from "@prisma/client";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { deleteRole } from "@/app/dashboard/settings/roles/actions/deleteRole";
+import { deleteRole } from "@/app/(private)/settings/roles/actions/deleteRole";
 
 interface DeleteRoleDialogProps {
   roleToDelete: Role | null;

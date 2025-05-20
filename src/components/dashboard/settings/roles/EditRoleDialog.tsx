@@ -5,7 +5,7 @@ import { Role } from "@prisma/client";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { updateRole } from "@/app/dashboard/settings/roles/actions/updateRole";
+import { updateRole } from "@/app/(private)/settings/roles/actions/updateRole";
 
 interface EditRoleDialogProps {
   roleToEdit: Role | null;

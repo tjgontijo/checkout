@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { updateMenuItem } from "@/app/dashboard/settings/menus/actions";
+import { updateMenuItem } from "@/app/(private)/settings/menus/actions";
 import { toast } from "sonner";
 import { MenuItemWithRelations, PermissionWithRelations } from "./MenuManagement";
 import { Resource } from "@prisma/client";
@@ -244,7 +244,7 @@ export function EditMenuDialog({ item, onMenuUpdated, setOpen, menuItems, permis
             id="menu-href"
             value={href}
             onChange={e => setHref(e.target.value)}
-            placeholder="Ex: /dashboard/settings"
+            placeholder="Ex: /settings"
             required
           />
         </div>

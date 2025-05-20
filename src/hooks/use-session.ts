@@ -30,7 +30,7 @@ export function useSessionRedirect(redirectTo: string = '/dashboard', redirectIf
   return { session, status }
 }
 
-export function useRequireAuth(redirectTo: string = '/auth/signin') {
+export function useRequireAuth(redirectTo: string = '/signin') {
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {

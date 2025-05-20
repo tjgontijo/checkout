@@ -55,7 +55,7 @@ export function SiteHeader() {
             size="sm" 
             className="hidden md:inline-flex bg-primary hover:bg-primary/90"
           >
-            <Link href="/auth/signin">
+            <Link href="/signin">
               Acessar Sistema
             </Link>
           </Button>
@@ -89,7 +89,7 @@ export function SiteHeader() {
                   asChild 
                   className="w-full bg-primary hover:bg-primary/90 mt-4"
                 >
-                  <Link href="/auth/signin">
+                  <Link href="/signin">
                     Acessar Sistema
                   </Link>
                 </Button>
