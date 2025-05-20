@@ -54,7 +54,7 @@ export function UserRolePopover({ user, roles }: UserRolePopoverProps) {
     
     try {
       // Importa a Server Action dinamicamente para evitar problemas de SSR
-      const { updateUserRole } = await import("@/app/settings/users/actions");
+      const { updateUserRole } = await import("@/app/(private)/settings/users/actions");
       
       // Chama a Server Action
       const result = await updateUserRole(formData);

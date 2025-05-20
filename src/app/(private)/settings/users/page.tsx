@@ -1,4 +1,4 @@
-import { UserTable } from "@/components/settings/users/UserTable";
+import { UserTable } from "@/components/dashboard/settings/users/UserTable";
 import { prisma } from "@/lib/prisma";
 
 export default async function UsersPage() {

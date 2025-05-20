@@ -14,7 +14,7 @@ import {
 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { deleteUser } from "@/app/settings/users/actions/deleteUser";
+import { deleteUser } from "@/app/(private)/settings/users/actions/deleteUser";
 
 interface DeleteUserDialogProps {
   userId: string;
