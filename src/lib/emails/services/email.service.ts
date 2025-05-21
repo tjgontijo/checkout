@@ -1,7 +1,7 @@
 import { NodemailerService } from './nodemailer.service'
-import { getVerificationEmailTemplate } from '../templates/verification.template'
-import { getResetPasswordEmailTemplate } from '../templates/reset-password.template'
-import { getSetInitialPasswordEmailTemplate } from '../templates/set-initial-password.template'
+import { getVerificationEmailTemplate } from '../templates/auth/verification.template'
+import { getResetPasswordEmailTemplate } from '../templates/auth/reset-password.template'
+import { getSetInitialPasswordEmailTemplate } from '../templates/auth/set-initial-password.template'
 import logger from '@/lib/logger'
 
 const emailService = new NodemailerService()
