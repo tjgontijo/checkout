@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { MenuItem } from '@/components/sidebar/menu'
+import { MenuItem } from '@/components/dashboard/sidebar/menu'
 import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 
