@@ -1,9 +1,9 @@
-import { MenuManagement } from "@/components/dashboard/settings/menus/MenuManagement";
-import { prisma } from "@/lib/prisma";
+import { MenuManagement } from '@/components/dashboard/settings/menus/MenuManagement';
+import { prisma } from '@/lib/prisma';
 
 export const metadata = {
-  title: "Gerenciamento de Menus",
-  description: "Gerencie os itens de menu do sistema",
+  title: 'Gerenciamento de Menus',
+  description: 'Gerencie os itens de menu do sistema',
 };
 
 export default async function MenusPage() {
@@ -22,7 +22,7 @@ export default async function MenusPage() {
           permission: true,
         },
         orderBy: {
-          order: "asc",
+          order: 'asc',
         },
       },
     },
@@ -30,7 +30,7 @@ export default async function MenusPage() {
       parentId: null, // Apenas itens raiz
     },
     orderBy: {
-      order: "asc",
+      order: 'asc',
     },
   });
 
@@ -43,12 +43,12 @@ export default async function MenusPage() {
     orderBy: [
       {
         resource: {
-          name: "asc",
+          name: 'asc',
         },
       },
       {
         action: {
-          name: "asc",
+          name: 'asc',
         },
       },
     ],
@@ -62,11 +62,8 @@ export default async function MenusPage() {
           Configure os itens de menu que serão exibidos na navegação do sistema.
         </p>
       </div>
-      
-      <MenuManagement 
-        menuItems={menuItems} 
-        permissions={permissions} 
-      />
+
+      <MenuManagement menuItems={menuItems} permissions={permissions} />
     </div>
   );
 }

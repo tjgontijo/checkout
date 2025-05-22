@@ -27,5 +27,5 @@ export function getSetInitialPasswordEmailTemplate(
         <a href="${setPasswordUrl}" style="color: #4F46E5;">${setPasswordUrl}</a>
       </p>
     </div>
-  `
+  `;
 }

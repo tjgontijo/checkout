@@ -1,31 +1,31 @@
-'use client'
+'use client';
 
-import { Suspense } from 'react'
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { FiAlertCircle, FiLock } from 'react-icons/fi'
+import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FiAlertCircle, FiLock } from 'react-icons/fi';
 
 function ResetPasswordContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams?.get('token')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams?.get('token');
 
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [isTokenValid, setIsTokenValid] = useState(false)
-  const [isValidating, setIsValidating] = useState(true)
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError('Token não fornecido')
-        setIsValidating(false)
-        return
+        setError('Token não fornecido');
+        setIsValidating(false);
+        return;
       }
 
       try {
@@ -34,51 +34,51 @@ function ResetPasswordContent() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             token,
-            type: 'password_reset' 
+            type: 'password_reset',
           }),
-        })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Token inválido')
+          throw new Error(data.error || 'Token inválido');
         }
 
-        setIsTokenValid(true)
+        setIsTokenValid(true);
       } catch (error) {
         if (error instanceof Error) {
-          setError(error.message)
+          setError(error.message);
         } else {
-          setError('Token inválido')
+          setError('Token inválido');
         }
-        setIsTokenValid(false)
+        setIsTokenValid(false);
       } finally {
-        setIsValidating(false)
+        setIsValidating(false);
       }
-    }
+    };
 
-    validateToken()
-  }, [token])
+    validateToken();
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setError('As senhas não coincidem')
-      setIsLoading(false)
-      return
+      setError('As senhas não coincidem');
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -91,60 +91,60 @@ function ResetPasswordContent() {
           token,
           password: formData.password,
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erro ao redefinir senha')
+        throw new Error(data.error || 'Erro ao redefinir senha');
       }
 
-      setSuccess(true)
+      setSuccess(true);
       setTimeout(() => {
-        router.push('/signin')
-      }, 3000)
+        router.push('/signin');
+      }, 3000);
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message)
+        setError(error.message);
       } else {
-        setError('Erro ao redefinir senha')
+        setError('Erro ao redefinir senha');
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isValidating) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-t-2 border-blue-500"></div>
           <p>Validando token...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isTokenValid) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center text-red-500">
-          <FiAlertCircle className="mx-auto text-4xl mb-4" />
+          <FiAlertCircle className="mx-auto mb-4 text-4xl" />
           <p>{error || 'Token inválido'}</p>
-          <button 
-            onClick={() => router.push('/signin')} 
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          <button
+            onClick={() => router.push('/signin')}
+            className="mt-4 rounded bg-blue-500 px-4 py-2 text-white"
           >
             Voltar para Login
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Redefinir Senha
@@ -152,40 +152,44 @@ function ResetPasswordContent() {
         </div>
         {success ? (
           <div className="text-center text-green-500">
-            <FiLock className="mx-auto text-4xl mb-4" />
+            <FiLock className="mx-auto mb-4 text-4xl" />
             <p>Senha redefinida com sucesso!</p>
             <p>Você será redirecionado em alguns segundos...</p>
           </div>
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="text-red-500 text-center mb-4">
-                <FiAlertCircle className="mx-auto text-2xl mb-2" />
+              <div className="mb-4 text-center text-red-500">
+                <FiAlertCircle className="mx-auto mb-2 text-2xl" />
                 <p>{error}</p>
               </div>
             )}
-            <div className="rounded-md shadow-sm -space-y-px">
+            <div className="-space-y-px rounded-md shadow-sm">
               <div>
-                <label htmlFor="password" className="sr-only">Nova Senha</label>
+                <label htmlFor="password" className="sr-only">
+                  Nova Senha
+                </label>
                 <input
                   id="password"
                   name="password"
                   type="password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
                   placeholder="Nova Senha"
                   value={formData.password}
                   onChange={handleChange}
                 />
               </div>
               <div>
-                <label htmlFor="confirmPassword" className="sr-only">Confirmar Senha</label>
+                <label htmlFor="confirmPassword" className="sr-only">
+                  Confirmar Senha
+                </label>
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
                   placeholder="Confirmar Senha"
                   value={formData.confirmPassword}
                   onChange={handleChange}
@@ -197,7 +201,7 @@ function ResetPasswordContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-600"
               >
                 {isLoading ? 'Redefinindo...' : 'Redefinir Senha'}
               </button>
@@ -206,7 +210,7 @@ function ResetPasswordContent() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default function ResetPassword() {
@@ -214,5 +218,5 @@ export default function ResetPassword() {
     <Suspense fallback={<div>Carregando...</div>}>
       <ResetPasswordContent />
     </Suspense>
-  )
+  );
 }

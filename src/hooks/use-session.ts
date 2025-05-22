@@ -1,33 +1,36 @@
-'use client'
+'use client';
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export function useSessionRedirect(redirectTo: string = '/dashboard', redirectIfNotAuthenticated?: string) {
+export function useSessionRedirect(
+  redirectTo: string = '/dashboard',
+  redirectIfNotAuthenticated?: string
+) {
   const { data: session, status } = useSession({
     required: false,
     onUnauthenticated() {
       // Opcional: log ou tratamento de não autenticado
-      console.debug('Not authenticated')
-    }
-  })
-  const router = useRouter()
+      console.debug('Not authenticated');
+    },
+  });
+  const router = useRouter();
 
   useEffect(() => {
     // Se o status de autenticação já foi verificado
     if (status !== 'loading') {
       if (session) {
         // Se estiver autenticado, redireciona para o dashboard (ou local especificado)
-        router.replace(redirectTo)
+        router.replace(redirectTo);
       } else if (redirectIfNotAuthenticated) {
         // Se não estiver autenticado e houver um redirecionamento específico
-        router.replace(redirectIfNotAuthenticated)
+        router.replace(redirectIfNotAuthenticated);
       }
     }
-  }, [session, status, router, redirectTo, redirectIfNotAuthenticated])
+  }, [session, status, router, redirectTo, redirectIfNotAuthenticated]);
 
-  return { session, status }
+  return { session, status };
 }
 
 export function useRequireAuth(redirectTo: string = '/signin') {
@@ -35,18 +38,18 @@ export function useRequireAuth(redirectTo: string = '/signin') {
     required: true,
     onUnauthenticated() {
       // Opcional: log ou tratamento de não autenticado
-      console.debug('Authentication required')
-    }
-  })
-  const router = useRouter()
+      console.debug('Authentication required');
+    },
+  });
+  const router = useRouter();
 
   useEffect(() => {
     // Se o status de autenticação já foi verificado
     if (status !== 'loading' && !session) {
       // Se não estiver autenticado, redireciona para login
-      router.replace(redirectTo)
+      router.replace(redirectTo);
     }
-  }, [session, status, router, redirectTo])
+  }, [session, status, router, redirectTo]);
 
-  return { session, status }
+  return { session, status };
 }

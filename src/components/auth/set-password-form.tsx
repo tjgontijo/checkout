@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import { useSearchParams } from 'next/navigation'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { useSearchParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,24 +13,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 const formSchema = z
   .object({
     password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
     confirmPassword: z.string(),
   })
-  .refine(data => data.password === data.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: 'As senhas não conferem',
     path: ['confirmPassword'],
-  })
+  });
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 export function SetPasswordForm() {
-  const searchParams = useSearchParams()
-  const token = searchParams.get('token')
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -38,12 +38,12 @@ export function SetPasswordForm() {
       password: '',
       confirmPassword: '',
     },
-  })
+  });
 
   async function onSubmit(data: FormValues) {
     if (!token) {
-      toast.error('Token não encontrado')
-      return
+      toast.error('Token não encontrado');
+      return;
     }
 
     try {
@@ -56,19 +56,19 @@ export function SetPasswordForm() {
           token,
           password: data.password,
         }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error)
+        throw new Error(result.error);
       }
 
-      toast.success('Senha definida com sucesso!')
-      window.location.href = '/signin'
+      toast.success('Senha definida com sucesso!');
+      window.location.href = '/signin';
     } catch (error) {
-      console.error(error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao definir senha')
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao definir senha');
     }
   }
 
@@ -108,5 +108,5 @@ export function SetPasswordForm() {
         </Button>
       </form>
     </Form>
-  )
+  );
 }

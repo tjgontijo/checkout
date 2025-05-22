@@ -1,12 +1,13 @@
-import { PrismaClient } from '@prisma/client'
-import { seedUsers } from './seed-users'
-import { initialRoles } from './seed-roles'
-import { initialResources } from './seed-resources'
-import { initialActions } from './seed-actions'
-import { initialPermissions } from './seed-permissions'
-import { seedMenuItems } from './seed-menu-items'
-import { seedRolePermissions } from './seed-role-permission'
+import { PrismaClient } from '@prisma/client';
+import { seedUsers } from './seed-users';
+import { initialRoles } from './seed-roles';
+import { initialResources } from './seed-resources';
+import { initialActions } from './seed-actions';
+import { initialPermissions } from './seed-permissions';
+import { seedMenuItems } from './seed-menu-items';
+import { seedRolePermissions } from './seed-role-permission';
 import logger from '@/lib/logger';
+import { initialProducts } from './seed-products';
 
 const prisma = new PrismaClient();
 
@@ -21,6 +22,7 @@ async function cleanDatabase() {
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
   await prisma.menuItem.deleteMany();
+  await prisma.product.deleteMany();
 }
 
 async function createInitialData() {
@@ -38,35 +40,40 @@ async function createInitialData() {
     await prisma.role.createMany({ data: initialRoles });
     logger.info('Roles created');
 
+    await prisma.product.createMany({ data: initialProducts });
+    logger.info('Products created');
+
     // Buscar recursos e ações para mapear seus IDs
     const resources = await prisma.resource.findMany();
     const actions = await prisma.action.findMany();
 
     // Criar permissões com IDs corretos
-    const permissionsToCreate = initialPermissions.map(permission => {
-      const resourceName = permission.resource?.connect?.name;
-      const actionName = permission.action?.connect?.name;
+    const permissionsToCreate = initialPermissions
+      .map((permission) => {
+        const resourceName = permission.resource?.connect?.name;
+        const actionName = permission.action?.connect?.name;
 
-      if (!resourceName || !actionName) {
-        logger.warn(`Skipping invalid permission: ${permission.name}`);
-        return null;
-      }
+        if (!resourceName || !actionName) {
+          logger.warn(`Skipping invalid permission: ${permission.name}`);
+          return null;
+        }
 
-      const resourceId = resources.find((r: { name: string }) => r.name === resourceName)?.id;
-      const actionId = actions.find((a: { name: string }) => a.name === actionName)?.id;
+        const resourceId = resources.find((r: { name: string }) => r.name === resourceName)?.id;
+        const actionId = actions.find((a: { name: string }) => a.name === actionName)?.id;
 
-      if (!resourceId || !actionId) {
-        logger.warn(`Could not find resource or action for: ${permission.name}`);
-        return null;
-      }
+        if (!resourceId || !actionId) {
+          logger.warn(`Could not find resource or action for: ${permission.name}`);
+          return null;
+        }
 
-      return {
-        name: permission.name,
-        description: permission.description,
-        resourceId,
-        actionId
-      };
-    }).filter((p): p is NonNullable<typeof p> => p !== null);
+        return {
+          name: permission.name,
+          description: permission.description,
+          resourceId,
+          actionId,
+        };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
     await prisma.permission.createMany({ data: permissionsToCreate });
     logger.info('Permissions created');

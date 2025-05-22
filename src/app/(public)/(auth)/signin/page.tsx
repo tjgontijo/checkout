@@ -1,82 +1,82 @@
-'use client'
+'use client';
 
-import { Suspense } from 'react'
-import { useState, useEffect } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
-import { FcGoogle } from 'react-icons/fc'
-import { useSessionRedirect } from '@/hooks/use-session'
+import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
+import { useSessionRedirect } from '@/hooks/use-session';
 
 function SignInPageContent() {
-  const { } = useSessionRedirect()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const registered = searchParams?.get('registered')
-  const email = searchParams?.get('email')
+  const {} = useSessionRedirect();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams?.get('registered');
+  const email = searchParams?.get('email');
 
   const [formData, setFormData] = useState({
     email: email || '',
     password: '',
-  })
-  const [errorState, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState(registered === 'true')
+  });
+  const [errorState, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(registered === 'true');
 
   useEffect(() => {
     if (registered === 'true') {
-      setSuccess(true)
+      setSuccess(true);
       // Limpar o parâmetro da URL para evitar mostrar a mensagem novamente
-      router.replace('/signin')
+      router.replace('/signin');
     }
-  }, [registered, router])
+  }, [registered, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-    setSuccess(false)
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess(false);
 
     try {
       const result = await signIn('credentials', {
         redirect: false,
         email: formData.email,
         password: formData.password,
-      })
+      });
 
       if (result?.error) {
         // Traduzir mensagens de erro específicas
         const errorMessages: { [key: string]: string } = {
-          'CredentialsSignin': 'Email ou senha incorretos. Verifique suas credenciais.',
-          'default': 'Ocorreu um erro ao fazer login. Tente novamente.'
-        }
-        
-        setError(errorMessages[result.error] || errorMessages['default'])
+          CredentialsSignin: 'Email ou senha incorretos. Verifique suas credenciais.',
+          default: 'Ocorreu um erro ao fazer login. Tente novamente.',
+        };
+
+        setError(errorMessages[result.error] || errorMessages['default']);
       } else {
-        router.push('/dashboard')
+        router.push('/dashboard');
       }
     } catch {
-      setError('Ocorreu um erro ao fazer login')
+      setError('Ocorreu um erro ao fazer login');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/dashboard' })
-  }
+    signIn('google', { callbackUrl: '/dashboard' });
+  };
 
   return (
-    <>      
-      <div className="mt-8 px-3 sm:mx-auto sm:w-full sm:max-w-md">        
+    <>
+      <div className="mt-8 px-3 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="transform bg-white px-4 py-8 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800 sm:rounded-lg sm:px-10">
           {success && (
             <div className="animate-fadeIn mb-4 rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
@@ -86,8 +86,8 @@ function SignInPageContent() {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-green-800 dark:text-green-200">
-                    Sua conta foi criada com sucesso! 
-                    Por favor, verifique seu email para confirmar o cadastro.
+                    Sua conta foi criada com sucesso! Por favor, verifique seu email para confirmar
+                    o cadastro.
                   </p>
                 </div>
               </div>
@@ -106,11 +106,11 @@ function SignInPageContent() {
               </div>
             </div>
           )}
-        <div className="sm:mx-auto sm:w-full sm:max-w-md pb-8">
-          <h2 className="text-center text-3xl font-extrabold text-gray-900 transition-colors duration-200 dark:text-white">
-            Acessar Conta
-          </h2>
-        </div>
+          <div className="pb-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <h2 className="text-center text-3xl font-extrabold text-gray-900 transition-colors duration-200 dark:text-white">
+              Acessar Conta
+            </h2>
+          </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label
@@ -219,30 +219,28 @@ function SignInPageContent() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={true}
-                className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-gray-200 px-4 py-3 text-sm font-medium text-gray-400 cursor-not-allowed opacity-50 dark:bg-gray-700 dark:text-gray-500"
+                className="flex w-full cursor-not-allowed items-center justify-center rounded-md border border-gray-300 bg-gray-200 px-4 py-3 text-sm font-medium text-gray-400 opacity-50 dark:bg-gray-700 dark:text-gray-500"
               >
-                <FcGoogle className="h-5 w-5 mr-2" />
+                <FcGoogle className="mr-2 h-5 w-5" />
                 Entrar com Google (Em breve)
               </button>
             </div>
-              <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Não tem uma conta?{' '}
-            <Link
-              href="/signup"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-            >
-              Cadastre-se
-            </Link>
-          </p>
-        </div>
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Não tem uma conta?{' '}
+                <Link
+                  href="/signup"
+                  className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                  Cadastre-se
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
-
-      
       </div>
     </>
-  )
+  );
 }
 
 export default function SignInPage() {
@@ -250,5 +248,5 @@ export default function SignInPage() {
     <Suspense fallback={<div>Carregando...</div>}>
       <SignInPageContent />
     </Suspense>
-  )
+  );
 }

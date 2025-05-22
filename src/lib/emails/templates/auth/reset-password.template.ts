@@ -22,5 +22,5 @@ export function getResetPasswordEmailTemplate(resetPasswordUrl: string): string 
         <a href="${resetPasswordUrl}" font-size: 12px; style="color: #4F46E5;">${resetPasswordUrl}</a>
       </p>
     </div>
-  `
+  `;
 }

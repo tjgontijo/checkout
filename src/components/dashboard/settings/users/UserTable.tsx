@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Pencil } from "lucide-react";
-import { DeleteUserDialog } from "./DeleteUserDialog";
+import { useState } from 'react';
+import { Pencil } from 'lucide-react';
+import { DeleteUserDialog } from './DeleteUserDialog';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,15 +14,15 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import { User, Role } from "@prisma/client";
+} from '@tanstack/react-table';
+import { User, Role } from '@prisma/client';
 
 // Componentes de tabela existentes
-import { DataTablePagination } from "@/components/dashboard/data-table/pagination";
-import { DataTableColumnHeader } from "@/components/dashboard/data-table/column-header";
+import { DataTablePagination } from '@/components/dashboard/data-table/pagination';
+import { DataTableColumnHeader } from '@/components/dashboard/data-table/column-header';
 
 // Componentes UI
-import { Input } from "@/components/ui/input";
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -30,8 +30,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { UserRolePopover } from "./UserRolePopover";
+} from '@/components/ui/table';
+import { UserRolePopover } from './UserRolePopover';
 
 // Tipagem forte para as props
 interface UserWithRoles extends User {
@@ -53,56 +53,46 @@ export function UserTable({ users, roles }: UserTableProps) {
   // Definição das colunas
   const columns: ColumnDef<UserWithRoles>[] = [
     {
-      accessorKey: "fullName",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Nome" />
-      ),
-      cell: ({ row }) => <div>{row.getValue("fullName")}</div>,
+      accessorKey: 'fullName',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
+      cell: ({ row }) => <div>{row.getValue('fullName')}</div>,
     },
     {
-      accessorKey: "email",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="E-mail" />
-      ),
-      cell: ({ row }) => <div>{row.getValue("email")}</div>,
+      accessorKey: 'email',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="E-mail" />,
+      cell: ({ row }) => <div>{row.getValue('email')}</div>,
     },
     {
-      accessorKey: "phoneNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Telefone" />
-      ),
-      cell: ({ row }) => <div>{row.getValue("phoneNumber")}</div>,
+      accessorKey: 'phoneNumber',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Telefone" />,
+      cell: ({ row }) => <div>{row.getValue('phoneNumber')}</div>,
     },
     {
-      id: "roles",
-      header: "Perfil",
+      id: 'roles',
+      header: 'Perfil',
+      cell: ({ row }) => <UserRolePopover user={row.original} roles={roles} />,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Data de Cadastro" />,
       cell: ({ row }) => (
-        <UserRolePopover user={row.original} roles={roles} />
+        <div>{new Date(row.getValue('createdAt')).toLocaleDateString('pt-BR')}</div>
       ),
     },
     {
-      accessorKey: "createdAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Data de Cadastro" />
-      ),
-      cell: ({ row }) => (
-        <div>{new Date(row.getValue("createdAt")).toLocaleDateString("pt-BR")}</div>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Ações",
+      id: 'actions',
+      header: 'Ações',
       cell: ({ row }) => {
         return (
           <div className="flex space-x-3">
-            <button 
-              className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition-colors"
-              onClick={() => console.log("Editar", row.original.id)}
+            <button
+              className="rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-800"
+              onClick={() => console.log('Editar', row.original.id)}
               title="Editar usuário"
             >
               <Pencil className="h-4 w-4" />
             </button>
-            <DeleteUserDialog 
+            <DeleteUserDialog
               userId={row.original.id}
               userName={row.original.fullName}
               userEmail={row.original.email}
@@ -139,10 +129,8 @@ export function UserTable({ users, roles }: UserTableProps) {
       <div className="flex items-center py-4">
         <Input
           placeholder="Buscar usuários..."
-          value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("fullName")?.setFilterValue(event.target.value)
-          }
+          value={(table.getColumn('fullName')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('fullName')?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
       </div>
@@ -157,10 +145,7 @@ export function UserTable({ users, roles }: UserTableProps) {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -169,10 +154,7 @@ export function UserTable({ users, roles }: UserTableProps) {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

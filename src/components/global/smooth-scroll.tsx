@@ -1,31 +1,31 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
 export function SmoothScroll() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLAnchorElement
-      
+      const target = e.target as HTMLAnchorElement;
+
       if (target.tagName === 'A' && target.hash) {
-        e.preventDefault()
-        const targetElement = document.querySelector(target.hash)
-        
+        e.preventDefault();
+        const targetElement = document.querySelector(target.hash);
+
         if (targetElement) {
           targetElement.scrollIntoView({
             behavior: 'smooth',
             block: 'start',
-            inline: 'nearest'
-          })
+            inline: 'nearest',
+          });
         }
       }
-    }
+    };
 
-    document.addEventListener('click', handleClick)
+    document.addEventListener('click', handleClick);
     return () => {
-      document.removeEventListener('click', handleClick)
-    }
-  }, [])
+      document.removeEventListener('click', handleClick);
+    };
+  }, []);
 
-  return null
+  return null;
 }

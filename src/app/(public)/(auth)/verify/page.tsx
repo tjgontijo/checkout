@@ -1,69 +1,69 @@
-'use client'
+'use client';
 
-import { Suspense } from 'react'
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
+import { Suspense } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 
 function VerifyPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams?.get('token')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams?.get('token');
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('')
-  const [verificationAttempted, setVerificationAttempted] = useState(false)
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('');
+  const [verificationAttempted, setVerificationAttempted] = useState(false);
 
   useEffect(() => {
     if (!token) {
-      setStatus('error')
-      setMessage('Token não encontrado')
+      setStatus('error');
+      setMessage('Token não encontrado');
       setTimeout(() => {
-        router.push('/signin?error=token-missing')
-      }, 3000)
-      return
+        router.push('/signin?error=token-missing');
+      }, 3000);
+      return;
     }
 
     const verifyToken = async () => {
       // Evita múltiplas tentativas de verificação
-      if (verificationAttempted) return
+      if (verificationAttempted) return;
 
       try {
-        setVerificationAttempted(true)
+        setVerificationAttempted(true);
         const response = await fetch('/api/validate-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ token }),
-        })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (response.ok) {
-          setStatus('success')
-          setMessage(data.message)
+          setStatus('success');
+          setMessage(data.message);
           setTimeout(() => {
-            router.push(`/signin?verified=true&email=${encodeURIComponent(data.email)}`)
-          }, 3000)
+            router.push(`/signin?verified=true&email=${encodeURIComponent(data.email)}`);
+          }, 3000);
         } else {
-          setStatus('error')
-          setMessage(data.message)
+          setStatus('error');
+          setMessage(data.message);
           setTimeout(() => {
-            router.push('/signin?error=verification-failed')
-          }, 3000)
+            router.push('/signin?error=verification-failed');
+          }, 3000);
         }
       } catch {
-        setStatus('error')
-        setMessage('Erro ao verificar token')
+        setStatus('error');
+        setMessage('Erro ao verificar token');
         setTimeout(() => {
-          router.push('/signin?error=verification-error')
-        }, 3000)
+          router.push('/signin?error=verification-error');
+        }, 3000);
       }
-    }
+    };
 
-    verifyToken()
-  }, [token, router, verificationAttempted])
+    verifyToken();
+  }, [token, router, verificationAttempted]);
 
   return (
     <>
@@ -104,9 +104,7 @@ function VerifyPageContent() {
                   <p className="text-lg font-medium text-gray-900 dark:text-white">
                     Erro na verificação
                   </p>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {message}
-                  </p>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{message}</p>
                 </div>
               </div>
             )}
@@ -114,7 +112,7 @@ function VerifyPageContent() {
         </div>
       </div>
     </>
-  )
+  );
 }
 
 export default function VerifyPage() {
@@ -122,5 +120,5 @@ export default function VerifyPage() {
     <Suspense fallback={<div>Carregando...</div>}>
       <VerifyPageContent />
     </Suspense>
-  )
+  );
 }

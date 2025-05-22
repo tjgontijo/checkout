@@ -2,8 +2,8 @@
 
 Sistema profissional de checkout para produtos digitais, com controle próprio de produtos, campanhas, order bumps e entrega segura de materiais digitais via link protegido por token e expiração (ex: 90 dias) usando hospedagem MinIO.
 
-
 ## 🚀 Objetivo
+
 - Criar um checkout controlado internamente.
 - Foco em produtos digitais, usando pagamentos via integração com o Mercado Pago e outros gatways de pagamento.
 - Permitir ofertas de **Order Bump** no checkout.
@@ -12,7 +12,9 @@ Sistema profissional de checkout para produtos digitais, com controle próprio d
 - Armazenar arquivos diretamente no **MinIO**.
 
 ## 🧱 Estrutura de Banco de Dados
+
 ### Usuários e Autenticação (RBAC)
+
 - **User**: Controle de usuários do painel admin.
 - **Session / Token**: Gerenciamento de login, sessões e recuperação.
 - **Role / Permission / Resource**: Controle de acesso baseado em papéis (RBAC).
@@ -27,9 +29,41 @@ Sistema profissional de checkout para produtos digitais, com controle próprio d
 
 ## 🎯 Lógica de Fluxo de Venda
 
+### Fluxo Básico
+
+- Cliente acessa página de vendas
+- Realiza checkout (com possibilidade de order bump)
+- Após pagamento aprovado, recebe acesso ao produto
+- Pode receber ofertas de upsell
+
+## 🔄 Sistema de Funil de Vendas (Implementação Futura)
+
+Planejamos implementar um sistema completo de funil de vendas com rastreamento, similar ao Funnelytics:
+
+### Estrutura do Funil
+
+- **Funil**: Conjunto de etapas conectadas que formam uma jornada de venda
+- **Etapas**: Páginas de venda, checkout, upsell, downsell, etc.
+- **Conexões**: Ligações entre etapas com condições (compra, recusa, abandono)
+
+### Rastreamento e Análise
+
+- Identificação única de visitantes
+- Registro de visitas em cada etapa do funil
+- Rastreamento de conversões e valores
+- Análise de fontes de tráfego e desempenho
+
+### Funcionalidades Planejadas
+
+- Editor visual de funis (arrastar e soltar)
+- Relatórios de desempenho por etapa
+- Testes A/B de diferentes caminhos
+- Integração com fontes de tráfego
+- Automações baseadas em comportamento
+
 flowchart TD;
-    A[Landing Page (LP)] --> B[Botão "Comprar" → Redireciona para Checkout (/checkout/{code})]
-    B --> C[Usuário Preenche Formulário (nome, email, telefone)]
+A[Landing Page (LP)] --> B[Botão "Comprar" → Redireciona para Checkout (/checkout/{code})]
+B --> C[Usuário Preenche Formulário (nome, email, telefone)]
 
     C --> D[Validação Imediata do WhatsApp (Evolution API) ao sair do campo telefone]
     D -->|Número Válido| E[Permite continuar preenchendo]
@@ -226,20 +260,24 @@ Cada evento enviado via webhook carrega um payload no formato JSON:
 Para garantir a qualidade e a robustez do sistema, implementamos uma estratégia de testes em múltiplas camadas:
 
 ### Testes Unitários
+
 - **Framework**: Jest
 - **Cobertura alvo**: 80% mínimo para componentes críticos
 - **Foco**: Serviços, controladores e funções utilitárias
 
 ### Testes de Integração
+
 - **Framework**: Supertest + Jest
 - **Escopo**: APIs, integrações com serviços externos, fluxo de pagamento
 - **Banco de dados**: Instância isolada para testes
 
 ### Testes End-to-End
+
 - **Framework**: Cypress
 - **Cenários**: Fluxo completo de checkout, acesso aos materiais, painel administrativo
 
 ### Execução Automatizada
+
 - Testes unitários e de integração: executados em cada commit/PR
 - Testes E2E: executados diariamente e antes de cada deploy para produção
 
@@ -255,6 +293,7 @@ Todas as APIs do sistema são documentadas utilizando o padrão OpenAPI/Swagger,
 - **GET /api/downloads/{token}**: Valida e serve o download de um produto
 
 A documentação completa inclui:
+
 - Esquemas de requisição e resposta
 - Códigos de status e mensagens de erro
 - Autenticação e autorização necessárias
@@ -263,18 +302,22 @@ A documentação completa inclui:
 ## 🔄 CI/CD e Controle de Versão
 
 ### Estratégia de Branches
+
 - **main**: Código em produção
 - **develop**: Código para próxima release
-- **feature/***: Desenvolvimento de novas funcionalidades
-- **hotfix/***: Correções urgentes para produção
+- **feature/\***: Desenvolvimento de novas funcionalidades
+- **hotfix/\***: Correções urgentes para produção
 
 ### Pipeline de CI/CD (GitHub Actions)
+
 1. **Build e Testes**: Acionado em cada push/PR
+
    - Verificação de tipos TypeScript
    - Execução de testes unitários e de integração
    - Análise estática de código (ESLint)
 
 2. **Deploy para Staging**: Automático ao mesclar com develop
+
    - Execução de testes E2E
    - Provisionamento de infraestrutura via IaC
 
@@ -294,11 +337,13 @@ O sistema foi projetado com suporte nativo à internacionalização desde o iní
 ## 📊 Análise e Monitoramento
 
 ### Monitoramento de Aplicação
+
 - **Performance**: New Relic / Datadog
 - **Logs**: Centralização em ELK Stack / Loki
 - **Erros**: Sentry para rastreamento de exceções
 
 ### Métricas de Negócio
+
 - Dashboard em tempo real com:
   - Conversão de checkout
   - Taxa de aprovação de pagamentos
@@ -306,6 +351,7 @@ O sistema foi projetado com suporte nativo à internacionalização desde o iní
   - Alertas de uso suspeito
 
 ### Alertas Proativos
+
 - Notificações via e-mail/Slack para:
   - Erros críticos em produção
   - Picos de tráfego anormais
@@ -316,6 +362,7 @@ O sistema foi projetado com suporte nativo à internacionalização desde o iní
 
 O projeto foi planejado desde o início para ser **modular**, **desacoplado** e pronto para escalar.
 A entrega do material é feita via link seguro com token e expiração, sem necessidade de área de membros, facilitando o acesso do cliente e reduzindo barreira de uso. Cada integração é abstraída via interfaces, facilitando troca de provedores ou expansão futura.
+
 - **Monitoramento de Compartilhamento**: Alertas automáticos para o admin em caso de uso suspeito do token (múltiplos IPs, regiões, etc) e relatórios de tentativas negadas.
 - **Customização de Marca D'água**: Marcação visível (nome/email) ou invisível (metadados), customizável por produto.
 - **Dashboard de Logs e Auditoria**: Visualização e exportação de tentativas de download, alertas e estatísticas por produto.

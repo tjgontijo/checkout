@@ -1,12 +1,12 @@
-"use server";
+'use server';
 
-import { cache } from "react";
-import { prisma } from "@/lib/prisma";
+import { cache } from 'react';
+import { prisma } from '@/lib/prisma';
 
 // Função para buscar itens de menu com cache
 export const getMenuItems = cache(async () => {
-  console.log("Buscando itens de menu do banco de dados (com cache)");
-  
+  console.log('Buscando itens de menu do banco de dados (com cache)');
+
   try {
     const menuItems = await prisma.menuItem.findMany({
       include: {
@@ -22,18 +22,18 @@ export const getMenuItems = cache(async () => {
             permission: true,
           },
           orderBy: {
-            order: "asc",
+            order: 'asc',
           },
         },
       },
       orderBy: {
-        order: "asc",
+        order: 'asc',
       },
     });
-    
+
     return menuItems;
   } catch (error) {
-    console.error("Erro ao buscar itens de menu:", error);
+    console.error('Erro ao buscar itens de menu:', error);
     return [];
   }
 });

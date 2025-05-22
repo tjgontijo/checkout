@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { useSession } from "next-auth/react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useSession } from 'next-auth/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
   return (
     <div className="space-y-6">
@@ -16,10 +16,13 @@ export default function DashboardPage() {
             <CardTitle>Bem-vindo, {session?.user?.name}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Aqui você pode gerenciar suas atividades e acessar diferentes funcionalidades do sistema.</p>
+            <p>
+              Aqui você pode gerenciar suas atividades e acessar diferentes funcionalidades do
+              sistema.
+            </p>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

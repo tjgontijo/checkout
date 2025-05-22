@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 /**
  * Verifica se o usuário autenticado possui uma permissão específica.
@@ -13,7 +13,7 @@ export async function requirePermission(permissionName: string, errorMessage?: s
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    throw new Error("Você precisa estar autenticado para realizar esta ação");
+    throw new Error('Você precisa estar autenticado para realizar esta ação');
   }
 
   const user = await prisma.user.findUnique({
@@ -32,17 +32,17 @@ export async function requirePermission(permissionName: string, errorMessage?: s
   });
 
   if (!user) {
-    throw new Error("Usuário não encontrado");
+    throw new Error('Usuário não encontrado');
   }
 
-  const hasPermission = user.roles.some(role =>
-    role.permissions.some(rp =>
-      rp.permission.name === permissionName
-    )
+  const hasPermission = user.roles.some((role) =>
+    role.permissions.some((rp) => rp.permission.name === permissionName)
   );
 
   if (!hasPermission) {
-    throw new Error(errorMessage || `Você não tem permissão para realizar esta ação (${permissionName})`);
+    throw new Error(
+      errorMessage || `Você não tem permissão para realizar esta ação (${permissionName})`
+    );
   }
 
   return user;

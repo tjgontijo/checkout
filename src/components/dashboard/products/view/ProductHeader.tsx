@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { CreateProductDialog } from "./CreateProductDialog";
+import { CreateProductDialog } from '../create/CreateProductDialog';
 
 interface ProductHeaderProps {
   title: string;
@@ -12,9 +12,7 @@ export function ProductHeader({ title, description }: ProductHeaderProps) {
     <div className="flex items-center justify-between">
       <div>
         <h3 className="text-lg font-medium">{title}</h3>
-        <p className="text-sm text-muted-foreground">
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <CreateProductDialog />
     </div>

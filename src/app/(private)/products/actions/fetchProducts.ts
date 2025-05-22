@@ -1,17 +1,18 @@
-"use server";
+'use server';
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
 export type ProductsResponse = {
   id: number;
   name: string;
   description: string;
-  price: number;
+  price: number; // valor em centavos (Int no banco)
   priceCurrency: string;
   salesPageUrl: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date | null;
 };
 
 export type FetchProductsParams = {
@@ -19,17 +20,19 @@ export type FetchProductsParams = {
   limit?: number;
   search?: string;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
   isActive?: boolean;
+  showDeleted?: boolean; // Opção para mostrar produtos excluídos
 };
 
 export async function fetchProducts({
   page = 1,
   limit = 10,
-  search = "",
-  sortBy = "createdAt",
-  sortOrder = "desc",
+  search = '',
+  sortBy = 'createdAt',
+  sortOrder = 'desc',
   isActive,
+  showDeleted = false,
 }: FetchProductsParams = {}) {
   try {
     // Calcular o número de itens a pular para paginação
@@ -37,13 +40,14 @@ export async function fetchProducts({
 
     // Construir o filtro de busca
     const where: {
-      deletedAt: null;
+      deletedAt?: null | { not: null };
       isActive?: boolean;
       OR?: Array<{
-        name?: { contains: string; mode: "insensitive" };
-        description?: { contains: string; mode: "insensitive" };
+        name?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
       }>;
     } = {
+      // Por padrão, não mostrar produtos excluídos
       deletedAt: null,
     };
 
@@ -52,11 +56,16 @@ export async function fetchProducts({
       where.isActive = isActive;
     }
 
+    // Se showDeleted for true, mostrar produtos excluídos (deletedAt não nulo)
+    if (showDeleted) {
+      where.deletedAt = { not: null };
+    }
+
     // Adicionar filtro de busca se fornecido
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -101,7 +110,7 @@ export async function fetchProducts({
       },
     };
   } catch (error) {
-    console.error("Erro ao buscar produtos:", error);
-    throw new Error("Não foi possível buscar os produtos. Tente novamente mais tarde.");
+    console.error('Erro ao buscar produtos:', error);
+    throw new Error('Não foi possível buscar os produtos. Tente novamente mais tarde.');
   }
 }

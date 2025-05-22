@@ -5,10 +5,4 @@ import { deleteMenuItem } from './deleteMenuItem';
 import { reorderMenuItems } from './reorderMenuItems';
 import { checkIfDescendant } from './checkIfDescendant';
 
-export {
-  createMenuItem,
-  updateMenuItem,
-  deleteMenuItem,
-  reorderMenuItems,
-  checkIfDescendant
-};
+export { createMenuItem, updateMenuItem, deleteMenuItem, reorderMenuItems, checkIfDescendant };

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Role, Permission, Resource, Action } from "@prisma/client";
-import { Search, Plus, Edit, Trash } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { CreateRoleDialog } from "./CreateRoleDialog";
-import { DeleteRoleDialog } from "./DeleteRoleDialog";
-import { EditRoleDialog } from "./EditRoleDialog";
+import { useState } from 'react';
+import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Role, Permission, Resource, Action } from '@prisma/client';
+import { Search, Plus, Edit, Trash } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { CreateRoleDialog } from './CreateRoleDialog';
+import { DeleteRoleDialog } from './DeleteRoleDialog';
+import { EditRoleDialog } from './EditRoleDialog';
 
 // Tipagem forte para as props
 interface RoleWithPermissions extends Role {
@@ -18,7 +18,7 @@ interface RoleWithPermissions extends Role {
     permission: Permission & {
       resource: Resource | null;
       action: Action | null;
-    }
+    };
   }>;
 }
 
@@ -30,9 +30,8 @@ interface RoleSidebarProps {
 
 export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebarProps) {
   // Estado para filtro de busca
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   // Estado para feedback - usado para exibir mensagens de sucesso/erro
-
 
   // Estado dos Dialogs
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -44,34 +43,35 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
   // Atualiza a página ao criar/excluir/editar role
   function handleRoleCreated() {
     toast({
-      title: "Perfil criado com sucesso!",
-      variant: "default"
+      title: 'Perfil criado com sucesso!',
+      variant: 'default',
     });
   }
   function handleRoleDeleted() {
     toast({
-      title: "Perfil excluído com sucesso!",
-      variant: "default"
+      title: 'Perfil excluído com sucesso!',
+      variant: 'default',
     });
   }
   function handleRoleUpdated() {
     toast({
-      title: "Perfil atualizado com sucesso!",
-      variant: "default"
+      title: 'Perfil atualizado com sucesso!',
+      variant: 'default',
     });
   }
 
   // Filtra as roles com base na busca
-  const filteredRoles = roles.filter(role => 
-    role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    role.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      role.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Cabeçalho com busca e botão de adicionar */}
-      <div className="p-4 border-b">
-        <div className="flex items-center space-x-2 mb-4">
+      <div className="border-b p-4">
+        <div className="mb-4 flex items-center space-x-2">
           <h2 className="text-lg font-semibold">Perfis</h2>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -80,22 +80,22 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
                 <span className="sr-only">Adicionar perfil</span>
               </Button>
             </DialogTrigger>
-            <CreateRoleDialog 
-              onRoleCreated={handleRoleCreated} 
+            <CreateRoleDialog
+              onRoleCreated={handleRoleCreated}
               setErrorMsg={(msg: string | null) => {
                 if (msg) {
                   toast({
-                    title: "Erro ao criar perfil",
+                    title: 'Erro ao criar perfil',
                     description: msg,
-                    variant: "destructive"
+                    variant: 'destructive',
                   });
                 }
-              }} 
-              setOpen={setCreateDialogOpen} 
+              }}
+              setOpen={setCreateDialogOpen}
             />
           </Dialog>
         </div>
-        
+
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -112,28 +112,28 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
         {filteredRoles.length > 0 ? (
           <ul className="divide-y">
             {filteredRoles.map((role) => (
-              <li 
+              <li
                 key={role.id}
                 className={cn(
-                  "p-4 cursor-pointer hover:bg-muted/50 transition-colors relative group",
-                  selectedRoleId === role.id && "bg-muted"
+                  'group relative cursor-pointer p-4 transition-colors hover:bg-muted/50',
+                  selectedRoleId === role.id && 'bg-muted'
                 )}
                 onClick={() => onSelectRole(role.id)}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">{role.name}</h3>
-                    <p className="text-sm text-muted-foreground truncate">{role.description}</p>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <p className="truncate text-sm text-muted-foreground">{role.description}</p>
+                    <div className="mt-1 text-xs text-muted-foreground">
                       {role.permissions.length} permissões
                     </div>
                   </div>
-                  
+
                   {/* Ações (visíveis apenas no hover) */}
-                  <div className="hidden group-hover:flex items-center space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                  <div className="hidden items-center space-x-1 group-hover:flex">
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -163,51 +163,49 @@ export function RoleSidebar({ roles, selectedRoleId, onSelectRole }: RoleSidebar
             ))}
           </ul>
         ) : (
-          <div className="p-4 text-center text-muted-foreground">
-            Nenhum perfil encontrado
-          </div>
+          <div className="p-4 text-center text-muted-foreground">Nenhum perfil encontrado</div>
         )}
       </div>
 
       {/* Modal de confirmação de exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DeleteRoleDialog 
-          roleToDelete={roleToDelete} 
+        <DeleteRoleDialog
+          roleToDelete={roleToDelete}
           onRoleDeleted={() => {
             handleRoleDeleted();
             setDeleteDialogOpen(false);
-          }} 
+          }}
           setErrorMsg={(msg: string | null) => {
             if (msg) {
               toast({
-                title: "Erro ao excluir perfil",
+                title: 'Erro ao excluir perfil',
                 description: msg,
-                variant: "destructive"
+                variant: 'destructive',
               });
             }
-          }} 
-          setOpen={setDeleteDialogOpen} 
+          }}
+          setOpen={setDeleteDialogOpen}
         />
       </Dialog>
 
       {/* Modal de edição de role */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <EditRoleDialog 
-          roleToEdit={roleToEdit} 
+        <EditRoleDialog
+          roleToEdit={roleToEdit}
           onRoleUpdated={() => {
             handleRoleUpdated();
             setEditDialogOpen(false);
-          }} 
+          }}
           setErrorMsg={(msg: string | null) => {
             if (msg) {
               toast({
-                title: "Erro ao editar perfil",
+                title: 'Erro ao editar perfil',
                 description: msg,
-                variant: "destructive"
+                variant: 'destructive',
               });
             }
-          }} 
-          setOpen={setEditDialogOpen} 
+          }}
+          setOpen={setEditDialogOpen}
         />
       </Dialog>
     </div>

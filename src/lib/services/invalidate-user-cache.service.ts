@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from 'next/cache';
 
 /**
  * Revalida o cache de qualquer path informado
@@ -8,4 +8,3 @@ import { revalidatePath } from "next/cache";
 export async function invalidateCache(path: string): Promise<void> {
   revalidatePath(path);
 }
-

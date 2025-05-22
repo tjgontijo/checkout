@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   Dialog,
@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 import {
   Form,
@@ -24,28 +24,28 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
-import { createProduct } from "@/app/(private)/products/actions/createProduct";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus } from 'lucide-react';
+import { createProduct } from '@/app/(private)/products/actions/createProduct';
 
 // Esquema de validação com Zod
 const productSchema = z.object({
-  name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
+  name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
+  description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres'),
   price: z.string().refine(
     (value) => {
-      const numValue = parseFloat(value.replace(",", "."));
+      const numValue = parseFloat(value.replace(',', '.'));
       return !isNaN(numValue) && numValue > 0;
     },
     {
-      message: "O preço deve ser um valor numérico positivo",
+      message: 'O preço deve ser um valor numérico positivo',
     }
   ),
-  salesPageUrl: z.string().url("URL inválida. Inclua http:// ou https://"),
+  salesPageUrl: z.string().url('URL inválida. Inclua http:// ou https://'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -58,12 +58,12 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  
+
   // Função para controlar a abertura/fechamento do diálogo
   const handleOpenChange = (open: boolean) => {
     if (!isSubmitting) {
       setIsOpen(open);
-      
+
       // Resetar o formulário quando o diálogo for fechado
       if (!open) {
         form.reset();
@@ -75,10 +75,10 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: "",
-      salesPageUrl: "https://",
+      name: '',
+      description: '',
+      price: '',
+      salesPageUrl: 'https://',
     },
   });
 
@@ -88,10 +88,10 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
 
       // Preparar os dados do formulário
       const formData = new FormData();
-      formData.append("name", values.name);
-      formData.append("description", values.description);
-      formData.append("price", values.price);
-      formData.append("salesPageUrl", values.salesPageUrl);
+      formData.append('name', values.name);
+      formData.append('description', values.description);
+      formData.append('price', values.price);
+      formData.append('salesPageUrl', values.salesPageUrl);
 
       // Enviar para a action
       const result = await createProduct(formData);
@@ -111,7 +111,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
         toast.error(result.message);
       }
     } catch (error) {
-      toast.error("Erro ao criar produto");
+      toast.error('Erro ao criar produto');
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -158,11 +158,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Descreva o produto"
-                      rows={3}
-                      {...field}
-                    />
+                    <Textarea placeholder="Descreva o produto" rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -176,12 +172,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                 <FormItem>
                   <FormLabel>Preço (R$)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="0,00"
-                      {...field}
-                      type="text"
-                      inputMode="decimal"
-                    />
+                    <Input placeholder="0,00" {...field} type="text" inputMode="decimal" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -212,7 +203,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : "Salvar Produto"}
+                {isSubmitting ? 'Salvando...' : 'Salvar Produto'}
               </Button>
             </DialogFooter>
           </form>

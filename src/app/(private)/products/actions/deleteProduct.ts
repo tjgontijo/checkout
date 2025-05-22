@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
 export type DeleteProductResponse = {
   success: boolean;
@@ -9,12 +9,12 @@ export type DeleteProductResponse = {
 
 export async function deleteProduct(formData: FormData): Promise<DeleteProductResponse> {
   try {
-    const productId = formData.get("productId");
+    const productId = formData.get('productId');
 
     if (!productId) {
       return {
         success: false,
-        message: "ID do produto não fornecido",
+        message: 'ID do produto não fornecido',
       };
     }
 
@@ -28,7 +28,7 @@ export async function deleteProduct(formData: FormData): Promise<DeleteProductRe
     if (!product) {
       return {
         success: false,
-        message: "Produto não encontrado",
+        message: 'Produto não encontrado',
       };
     }
 
@@ -42,7 +42,7 @@ export async function deleteProduct(formData: FormData): Promise<DeleteProductRe
     if (checkoutsCount > 0) {
       return {
         success: false,
-        message: "Este produto não pode ser excluído pois está sendo usado em checkouts",
+        message: 'Este produto não pode ser excluído pois está sendo usado em checkouts',
       };
     }
 
@@ -56,7 +56,7 @@ export async function deleteProduct(formData: FormData): Promise<DeleteProductRe
     if (ordersCount > 0) {
       return {
         success: false,
-        message: "Este produto não pode ser excluído pois está associado a pedidos",
+        message: 'Este produto não pode ser excluído pois está associado a pedidos',
       };
     }
 
@@ -73,13 +73,13 @@ export async function deleteProduct(formData: FormData): Promise<DeleteProductRe
 
     return {
       success: true,
-      message: "Produto excluído com sucesso",
+      message: 'Produto excluído com sucesso',
     };
   } catch (error) {
-    console.error("Erro ao excluir produto:", error);
+    console.error('Erro ao excluir produto:', error);
     return {
       success: false,
-      message: "Ocorreu um erro ao excluir o produto. Tente novamente mais tarde.",
+      message: 'Ocorreu um erro ao excluir o produto. Tente novamente mais tarde.',
     };
   }
 }

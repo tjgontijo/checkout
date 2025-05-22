@@ -1,11 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { MenuItemWithRelations } from "./MenuManagement";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, Edit, Trash, MoveUp, MoveDown, EyeOff, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { MenuItemWithRelations } from './MenuManagement';
+import { Button } from '@/components/ui/button';
+import {
+  ChevronRight,
+  ChevronDown,
+  Edit,
+  Trash,
+  MoveUp,
+  MoveDown,
+  EyeOff,
+  Lock,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface MenuTreeProps {
   items: MenuItemWithRelations[];
@@ -17,26 +26,26 @@ interface MenuTreeProps {
 export function MenuTree({ items, onEditItem, onMoveUp, onMoveDown }: MenuTreeProps) {
   // Estado para controlar quais nós estão expandidos
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-  
+
   // Função para alternar a expansão de um nó
   const toggleNode = (itemId: string) => {
-    setExpandedNodes(prev => ({
+    setExpandedNodes((prev) => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [itemId]: !prev[itemId],
     }));
   };
-  
+
   // Função para renderizar um item de menu e seus filhos recursivamente
   const renderMenuItem = (item: MenuItemWithRelations, depth = 0) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedNodes[item.id] || false;
-    
+
     return (
       <div key={item.id} className="menu-tree-item">
-        <div 
+        <div
           className={cn(
-            "flex items-center py-2 px-4 hover:bg-muted/50 border-b",
-            depth > 0 && "pl-8"
+            'flex items-center border-b px-4 py-2 hover:bg-muted/50',
+            depth > 0 && 'pl-8'
           )}
         >
           {/* Ícone de expansão (apenas se tiver filhos) */}
@@ -56,14 +65,11 @@ export function MenuTree({ items, onEditItem, onMoveUp, onMoveDown }: MenuTreePr
               </Button>
             )}
           </div>
-          
+
           {/* Informações do item */}
-          <div 
-            className="flex-1 flex items-center cursor-pointer"
-            onClick={() => onEditItem(item)}
-          >
+          <div className="flex flex-1 cursor-pointer items-center" onClick={() => onEditItem(item)}>
             <span className="font-medium">{item.label}</span>
-            
+
             {/* Indicadores visuais */}
             <div className="ml-2 flex items-center space-x-1">
               {!item.showInMenu && (
@@ -77,15 +83,11 @@ export function MenuTree({ items, onEditItem, onMoveUp, onMoveDown }: MenuTreePr
                 </span>
               )}
             </div>
-            
+
             {/* Rota (se houver) */}
-            {item.href && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                {item.href}
-              </span>
-            )}
+            {item.href && <span className="ml-2 text-xs text-muted-foreground">{item.href}</span>}
           </div>
-          
+
           {/* Ações */}
           <div className="flex items-center space-x-1">
             {/* Botão de adicionar subitem removido para manter apenas o botão principal */}
@@ -127,21 +129,21 @@ export function MenuTree({ items, onEditItem, onMoveUp, onMoveDown }: MenuTreePr
             </Button>
           </div>
         </div>
-        
+
         {/* Renderizar filhos se o nó estiver expandido */}
         {hasChildren && isExpanded && (
-          <div className="menu-tree-children pl-6 border-l ml-4">
-            {item.children!.map(child => renderMenuItem(child, depth + 1))}
+          <div className="menu-tree-children ml-4 border-l pl-6">
+            {item.children!.map((child) => renderMenuItem(child, depth + 1))}
           </div>
         )}
       </div>
     );
   };
-  
+
   return (
     <div className="menu-tree" role="tree">
       {items.length > 0 ? (
-        items.map(item => renderMenuItem(item))
+        items.map((item) => renderMenuItem(item))
       ) : (
         <div className="py-8 text-center text-muted-foreground">
           Nenhum item de menu encontrado. Clique em &quot;Novo Item&quot; para criar.

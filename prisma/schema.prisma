@@ -181,19 +181,26 @@ model UserConsent {
 // ========================
 
 model Product {
-  id              Int      @id @default(autoincrement())
+  id              String   @id @default(cuid())
   name            String
   description     String
-  price           Float
+  price           Int
   priceCurrency   String   @default("BRL") // Multi-moeda  
-  salesPageUrl    String
+  salesPageUrl    String  
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
 
   checkouts       Checkout[]
-  orderBumps      CheckoutOrderBump[]
+  
+  // Relações de order bumps
+  mainProductBumps ProductOrderBump[] @relation("MainProductOrderBumps") // Order bumps que este produto oferece
+  asBumpProduct   ProductOrderBump[] @relation("BumpProducts")          // Quando este produto é oferecido como order bump
+  
+  // Configuração de redirecionamento após pagamento
+  thankYouRedirect ProductThankYouRedirect? @relation("ProductThankYouRedirects")
+  
   orders          Order[]
   productAsset    ProductAsset?
   orderItems      OrderItem[]
@@ -203,8 +210,8 @@ model Product {
 }
 
 model ProductTranslation {
-  id              Int      @id @default(autoincrement())
-  productId       Int
+  id              String   @id @default(cuid())
+  productId       String
   languageCode    String   // "pt-BR", "en-US", etc.
   name            String
   description     String
@@ -215,8 +222,8 @@ model ProductTranslation {
 }
 
 model ProductAsset {
-  id           Int      @id @default(autoincrement())
-  productId    Int      @unique
+  id           String   @id @default(cuid())
+  productId    String   @unique
   bucket       String   // nome do bucket MinIO
   objectKey    String   // chave/caminho do objeto no MinIO
   fileName     String
@@ -232,10 +239,10 @@ model ProductAsset {
 
 
 model Checkout {
-  id              Int       @id @default(autoincrement())
+  id              String    @id @default(cuid())
   code            String    @unique
-  productId       Int
-  price           Float
+  productId       String
+  price           Int // valor em centavos
   priceCurrency   String    @default("BRL") // Multi-moeda
   campaignName    String?
   upsellPageUrl   String?
@@ -246,7 +253,6 @@ model Checkout {
   deletedAt       DateTime?
 
   product         Product   @relation(fields: [productId], references: [id])
-  orderBumps      CheckoutOrderBump[]
   orders          Order[]
   translations    CheckoutTranslation[]
   
@@ -254,8 +260,8 @@ model Checkout {
 }
 
 model CheckoutTranslation {
-  id              Int      @id @default(autoincrement())
-  checkoutId      Int
+  id              String   @id @default(cuid())
+  checkoutId      String
   languageCode    String  // "pt-BR", "en-US", etc.
   campaignName    String?
   successMessage  String?
@@ -266,19 +272,50 @@ model CheckoutTranslation {
   @@unique([checkoutId, languageCode])
 }
 
-model CheckoutOrderBump {
-  id               Int      @id @default(autoincrement())
-  checkoutId       Int
-  productId        Int
-  shortDescription String
-  displayOrder     Int?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  deletedAt        DateTime?
+/// Order bump é um produto adicional ofertado no checkout de outro produto.
+/// Order bump é um produto adicional que pode ser oferecido junto com outro produto
+model ProductOrderBump {
+  id                String   @id @default(cuid())
+  mainProductId     String   // Produto principal que oferece o order bump
+  bumpProductId     String   // Produto que será oferecido como order bump
 
-  checkout         Checkout @relation(fields: [checkoutId], references: [id])
-  product          Product  @relation(fields: [productId], references: [id])
+  /// Produto principal que oferece o order bump
+  mainProduct       Product  @relation("MainProductOrderBumps", fields: [mainProductId], references: [id])
+  /// Produto que será ofertado como order bump
+  bumpProduct       Product  @relation("BumpProducts", fields: [bumpProductId], references: [id])
+
+  callToAction      String   // Ex: "Sim, eu aceito essa oferta especial!"
+  title             String   // Título do order bump
+  description       String   // Descrição do order bump
+  showProductImage  Boolean  @default(false) // Se deve exibir a imagem do produto
+  displayOrder      Int?     // Ordem de exibição
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  @@index([mainProductId])
+  @@index([bumpProductId])
+}
+
+/// Configuração de redirecionamento após pagamento aprovado
+model ProductThankYouRedirect {
+  id                String   @id @default(cuid())
+  productId         String   // Produto associado
+  
+  /// Produto associado a este redirecionamento
+  product           Product  @relation("ProductThankYouRedirects", fields: [productId], references: [id])
+  
+  // URLs de redirecionamento por método de pagamento
+  cardRedirectUrl   String?  // URL para redirecionar após pagamento aprovado via cartão
+  pixRedirectUrl    String?  // URL para redirecionar após pagamento aprovado via PIX
+  
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([productId])
+  @@unique([productId])
 }
 
 enum PaymentStatus {
@@ -289,9 +326,9 @@ enum PaymentStatus {
 }
 
 model Order {
-  id              Int           @id @default(autoincrement())
-  checkoutId      Int
-  productId       Int
+  id              String        @id @default(cuid())
+  checkoutId      String
+  productId       String
   customerName    String
   customerEmail   String
   customerPhone   String
@@ -306,14 +343,14 @@ model Order {
   accessToken     AccessToken?
   orderItems      OrderItem[]
 
-  @@index([paymentStatus, createdAt])
+  @@index([createdAt])
   @@index([customerEmail])
 }
 
 model OrderItem {
-  id          Int     @id @default(autoincrement())
-  orderId     Int
-  productId   Int
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
   quantity    Int     @default(1)
   priceAtTime Float    // Preço no momento da compra
   isOrderBump Boolean  @default(false)
@@ -328,8 +365,8 @@ model OrderItem {
 }
 
 model AccessToken {
-  id              Int       @id @default(autoincrement())
-  orderId         Int       @unique
+  id              String    @id @default(cuid())
+  orderId         String    @unique
   token           String    @unique
   isActive        Boolean   @default(true)
   downloadsCount  Int       @default(0)
@@ -345,8 +382,8 @@ model AccessToken {
 }
 
 model Download {
-  id            Int       @id @default(autoincrement())
-  accessTokenId Int
+  id            String    @id @default(cuid())
+  accessTokenId String
   ipAddress     String
   userAgent     String
   fileName      String    // Nome do arquivo baixado
@@ -358,7 +395,7 @@ model Download {
 }
 
 model Webhook {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid())
   url         String
   events      String[]  // array de eventos: "order.created", "payment.approved", etc.
   active      Boolean   @default(true)
@@ -375,8 +412,8 @@ model Webhook {
 }
 
 model WebhookLog {
-  id          Int      @id @default(autoincrement())
-  webhookId   Int
+  id          String   @id @default(cuid())
+  webhookId   String
   event       String
   payload     String   // JSON payload enviado
   response    String?  // resposta do servidor externo

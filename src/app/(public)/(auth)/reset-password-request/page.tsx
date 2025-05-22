@@ -1,21 +1,21 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { FiMail, FiAlertCircle } from 'react-icons/fi'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiMail, FiAlertCircle } from 'react-icons/fi';
 
 export default function ResetPasswordRequest() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-    setSuccess(false)
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess(false);
 
     try {
       const response = await fetch('/api/send-reset-email', {
@@ -24,41 +24,41 @@ export default function ResetPasswordRequest() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Ocorreu um erro ao enviar o email')
+        throw new Error(data.error || 'Ocorreu um erro ao enviar o email');
       }
 
-      setSuccess(true)
+      setSuccess(true);
       setTimeout(() => {
-        router.push('/signin')
-      }, 5000)
+        router.push('/signin');
+      }, 5000);
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message)
+        setError(error.message);
       } else {
-        setError('Ocorreu um erro ao enviar o email')
+        setError('Ocorreu um erro ao enviar o email');
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <> 
+    <>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white px-4 py-8 shadow dark:bg-gray-800 sm:rounded-lg sm:px-10">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md pb-4">
-          <h2 className="text-center text-3xl font-extrabold text-gray-900 transition-colors duration-200 dark:text-white">
-            Redefinir Senha
-          </h2>
-          <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
-            Digite seu email e enviaremos um link para redefinir sua senha.
-          </p>
-        </div>
+          <div className="pb-4 sm:mx-auto sm:w-full sm:max-w-md">
+            <h2 className="text-center text-3xl font-extrabold text-gray-900 transition-colors duration-200 dark:text-white">
+              Redefinir Senha
+            </h2>
+            <p className="mt-2 text-center text-xs text-gray-600 dark:text-gray-400">
+              Digite seu email e enviaremos um link para redefinir sua senha.
+            </p>
+          </div>
           {error && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
               <div className="flex">
@@ -110,7 +110,7 @@ export default function ResetPasswordRequest() {
                     autoComplete="email"
                     required
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="block w-full rounded-md border-2 border-gray-300 bg-white py-3 pl-10 text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-gray-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:hover:border-gray-400 dark:focus:border-indigo-400 dark:focus:ring-indigo-400 sm:text-sm"
                     placeholder="seu@email.com"
                   />
@@ -135,5 +135,5 @@ export default function ResetPasswordRequest() {
         </div>
       </div>
     </>
-  )
+  );
 }

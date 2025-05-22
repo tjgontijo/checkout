@@ -1,5 +1,5 @@
-import { RoleManagement } from "@/components/dashboard/settings/roles/RoleManagement";
-import { getRolesAndPermissions } from "./actions/getRolesAndPermissions";
+import { RoleManagement } from '@/components/dashboard/settings/roles/RoleManagement';
+import { getRolesAndPermissions } from './actions/getRolesAndPermissions';
 
 export default async function RolesPage() {
   // Busca todas as roles e permissões usando a action
@@ -7,11 +7,8 @@ export default async function RolesPage() {
 
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Perfis e Permissões</h1>
-      <RoleManagement 
-        roles={roles} 
-        permissionsByResource={permissionsByResource} 
-      />
+      <h1 className="mb-4 text-2xl font-bold">Perfis e Permissões</h1>
+      <RoleManagement roles={roles} permissionsByResource={permissionsByResource} />
     </main>
   );
 }

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
-import * as LucideIcons from "lucide-react";
-import { LucideProps } from "lucide-react";
-import { ForwardRefExoticComponent, RefAttributes } from "react";
+import * as LucideIcons from 'lucide-react';
+import { LucideProps } from 'lucide-react';
+import { ForwardRefExoticComponent, RefAttributes } from 'react';
 
 // Tipo para o item de menu
 export type MenuItem = {
@@ -24,11 +24,11 @@ export type MenuItem = {
 
 export function getIconComponent(
   iconName: string
-): ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>> {
+): ForwardRefExoticComponent<Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>> {
   const IconComponent = (
     LucideIcons as unknown as Record<
       string,
-      ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>
+      ForwardRefExoticComponent<Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>>
     >
   )[iconName];
   return IconComponent || LucideIcons.Menu;
@@ -38,22 +38,23 @@ export function getIconComponent(
 export function usePermissions() {
   const { data: session } = useSession();
 
-  const hasPermission = useCallback((requiredPermissions?: string[]) => {
-    // Validações adicionais
-    if (!session?.user) return false;
-    if (!requiredPermissions || requiredPermissions.length === 0) return true;
+  const hasPermission = useCallback(
+    (requiredPermissions?: string[]) => {
+      // Validações adicionais
+      if (!session?.user) return false;
+      if (!requiredPermissions || requiredPermissions.length === 0) return true;
 
-    const userPermissions = session.user.permissions || [];
-    
-    return requiredPermissions.some(permission => 
-      userPermissions.includes(permission)
-    );
-  }, [session]);
+      const userPermissions = session.user.permissions || [];
+
+      return requiredPermissions.some((permission) => userPermissions.includes(permission));
+    },
+    [session]
+  );
 
   return {
     hasPermission,
     userPermissions: session?.user?.permissions || [],
-    isAuthenticated: !!session?.user
+    isAuthenticated: !!session?.user,
   };
 }
 

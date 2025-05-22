@@ -1,45 +1,42 @@
-import React from 'react'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select'
+import React from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Gerar opções de horário das 6h às 22h em intervalos de 30 minutos
 const generateTimeOptions = () => {
-  const options: string[] = []
-  
+  const options: string[] = [];
+
   for (let hour = 6; hour <= 22; hour++) {
     // Hora cheia
-    options.push(`${hour.toString().padStart(2, '0')}:00`)
-    
+    options.push(`${hour.toString().padStart(2, '0')}:00`);
+
     // Meia hora
-    options.push(`${hour.toString().padStart(2, '0')}:30`)
+    options.push(`${hour.toString().padStart(2, '0')}:30`);
   }
-  
-  return options
-}
+
+  return options;
+};
 
 interface TimeSelectProps {
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-export const TimeSelect: React.FC<TimeSelectProps> = ({ 
-  value, 
-  onChange, 
-  placeholder = "Selecione o horário" 
+export const TimeSelect: React.FC<TimeSelectProps> = ({
+  value,
+  onChange,
+  placeholder = 'Selecione o horário',
 }) => {
-  const timeOptions = generateTimeOptions()
+  const timeOptions = generateTimeOptions();
 
   return (
-    <Select 
-      onValueChange={onChange}
-      value={value}
-    >
+    <Select onValueChange={onChange} value={value}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
@@ -51,5 +48,5 @@ export const TimeSelect: React.FC<TimeSelectProps> = ({
         ))}
       </SelectContent>
     </Select>
-  )
-}
+  );
+};

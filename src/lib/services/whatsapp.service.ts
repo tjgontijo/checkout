@@ -38,7 +38,7 @@ export class WhatsappService {
   private baseUrl: string;
   private instance: string;
 
-  constructor() {    
+  constructor() {
     this.apiKey = process.env.APIKEY_EVOLUTION || 'B37B2EA91D67-4F2C-8F69-4EC2A35A5D4E';
     this.baseUrl = process.env.EVOLUTION_BASE_URL || 'https://evolution.elev8.com.br/';
     this.instance = process.env.INSTANCE_EVOLUTION || 'Thiago';
@@ -50,17 +50,17 @@ export class WhatsappService {
 
   private normalizePhoneNumber(phone: string): string {
     const cleanedPhone = phone.replace(/\D/g, '');
-    
+
     if (/^55\d{10,11}$/.test(cleanedPhone)) {
       return cleanedPhone;
     }
-    
+
     const phoneWithoutLeadingZero = cleanedPhone.replace(/^0/, '');
-    
+
     if (/^\d{10,11}$/.test(phoneWithoutLeadingZero)) {
       return `55${phoneWithoutLeadingZero}`;
     }
-    
+
     return cleanedPhone;
   }
 
@@ -78,8 +78,8 @@ export class WhatsappService {
         signal: controller.signal,
         headers: {
           ...options.headers,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       clearTimeout(id);
@@ -95,16 +95,16 @@ export class WhatsappService {
 
     try {
       const url = `${this.normalizeBaseUrl(this.baseUrl)}chat/whatsappNumbers/${this.instance}`;
-      
+
       const options = {
         method: 'POST',
         headers: {
-          apikey: this.apiKey, 
-          'Content-Type': 'application/json'
+          apikey: this.apiKey,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ numbers: [normalizedPhone] })
+        body: JSON.stringify({ numbers: [normalizedPhone] }),
       };
-      
+
       const response = await this.fetchWithTimeout(url, options);
 
       if (!response.ok) {
@@ -142,8 +142,8 @@ export class WhatsappService {
   }
 
   async sendTextMessage(
-    phone: string, 
-    text: string, 
+    phone: string,
+    text: string,
     options: {
       delay?: number;
       quoted?: {
@@ -171,7 +171,7 @@ export class WhatsappService {
         method: 'POST',
         headers: {
           apikey: this.apiKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           number: normalizedPhone,
@@ -180,8 +180,8 @@ export class WhatsappService {
           quoted: options.quoted,
           linkPreview: options.linkPreview,
           mentionsEveryOne: options.mentionsEveryOne,
-          mentioned: options.mentioned
-        })
+          mentioned: options.mentioned,
+        }),
       };
 
       const response = await this.fetchWithTimeout(url, requestOptions);

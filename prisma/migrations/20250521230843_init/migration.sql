@@ -143,10 +143,10 @@ CREATE TABLE "UserConsent" (
 
 -- CreateTable
 CREATE TABLE "Product" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "price" DOUBLE PRECISION NOT NULL,
+    "price" INTEGER NOT NULL,
     "priceCurrency" TEXT NOT NULL DEFAULT 'BRL',
     "salesPageUrl" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -159,8 +159,8 @@ CREATE TABLE "Product" (
 
 -- CreateTable
 CREATE TABLE "ProductTranslation" (
-    "id" SERIAL NOT NULL,
-    "productId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
     "languageCode" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -170,8 +170,8 @@ CREATE TABLE "ProductTranslation" (
 
 -- CreateTable
 CREATE TABLE "ProductAsset" (
-    "id" SERIAL NOT NULL,
-    "productId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
     "bucket" TEXT NOT NULL,
     "objectKey" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
@@ -186,10 +186,10 @@ CREATE TABLE "ProductAsset" (
 
 -- CreateTable
 CREATE TABLE "Checkout" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
-    "productId" INTEGER NOT NULL,
-    "price" DOUBLE PRECISION NOT NULL,
+    "productId" TEXT NOT NULL,
+    "price" INTEGER NOT NULL,
     "priceCurrency" TEXT NOT NULL DEFAULT 'BRL',
     "campaignName" TEXT,
     "upsellPageUrl" TEXT,
@@ -204,8 +204,8 @@ CREATE TABLE "Checkout" (
 
 -- CreateTable
 CREATE TABLE "CheckoutTranslation" (
-    "id" SERIAL NOT NULL,
-    "checkoutId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "checkoutId" TEXT NOT NULL,
     "languageCode" TEXT NOT NULL,
     "campaignName" TEXT,
     "successMessage" TEXT,
@@ -215,25 +215,41 @@ CREATE TABLE "CheckoutTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "CheckoutOrderBump" (
-    "id" SERIAL NOT NULL,
-    "checkoutId" INTEGER NOT NULL,
-    "productId" INTEGER NOT NULL,
-    "shortDescription" TEXT NOT NULL,
+CREATE TABLE "ProductOrderBump" (
+    "id" TEXT NOT NULL,
+    "mainProductId" TEXT NOT NULL,
+    "bumpProductId" TEXT NOT NULL,
+    "callToAction" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "showProductImage" BOOLEAN NOT NULL DEFAULT false,
     "displayOrder" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
-    CONSTRAINT "CheckoutOrderBump_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "ProductOrderBump_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductThankYouRedirect" (
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "cardRedirectUrl" TEXT,
+    "pixRedirectUrl" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProductThankYouRedirect_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Order" (
-    "id" SERIAL NOT NULL,
-    "checkoutId" INTEGER NOT NULL,
-    "productId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "checkoutId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
     "customerName" TEXT NOT NULL,
     "customerEmail" TEXT NOT NULL,
     "customerPhone" TEXT NOT NULL,
@@ -248,9 +264,9 @@ CREATE TABLE "Order" (
 
 -- CreateTable
 CREATE TABLE "OrderItem" (
-    "id" SERIAL NOT NULL,
-    "orderId" INTEGER NOT NULL,
-    "productId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "priceAtTime" DOUBLE PRECISION NOT NULL,
     "isOrderBump" BOOLEAN NOT NULL DEFAULT false,
@@ -262,8 +278,8 @@ CREATE TABLE "OrderItem" (
 
 -- CreateTable
 CREATE TABLE "AccessToken" (
-    "id" SERIAL NOT NULL,
-    "orderId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "downloadsCount" INTEGER NOT NULL DEFAULT 0,
@@ -277,8 +293,8 @@ CREATE TABLE "AccessToken" (
 
 -- CreateTable
 CREATE TABLE "Download" (
-    "id" SERIAL NOT NULL,
-    "accessTokenId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "accessTokenId" TEXT NOT NULL,
     "ipAddress" TEXT NOT NULL,
     "userAgent" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
@@ -289,7 +305,7 @@ CREATE TABLE "Download" (
 
 -- CreateTable
 CREATE TABLE "Webhook" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "events" TEXT[],
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -305,8 +321,8 @@ CREATE TABLE "Webhook" (
 
 -- CreateTable
 CREATE TABLE "WebhookLog" (
-    "id" SERIAL NOT NULL,
-    "webhookId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "webhookId" TEXT NOT NULL,
     "event" TEXT NOT NULL,
     "payload" TEXT NOT NULL,
     "response" TEXT,
@@ -486,7 +502,19 @@ CREATE INDEX "Checkout_isActive_deletedAt_idx" ON "Checkout"("isActive", "delete
 CREATE UNIQUE INDEX "CheckoutTranslation_checkoutId_languageCode_key" ON "CheckoutTranslation"("checkoutId", "languageCode");
 
 -- CreateIndex
-CREATE INDEX "Order_paymentStatus_createdAt_idx" ON "Order"("paymentStatus", "createdAt");
+CREATE INDEX "ProductOrderBump_mainProductId_idx" ON "ProductOrderBump"("mainProductId");
+
+-- CreateIndex
+CREATE INDEX "ProductOrderBump_bumpProductId_idx" ON "ProductOrderBump"("bumpProductId");
+
+-- CreateIndex
+CREATE INDEX "ProductThankYouRedirect_productId_idx" ON "ProductThankYouRedirect"("productId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProductThankYouRedirect_productId_key" ON "ProductThankYouRedirect"("productId");
+
+-- CreateIndex
+CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
 
 -- CreateIndex
 CREATE INDEX "Order_customerEmail_idx" ON "Order"("customerEmail");
@@ -576,10 +604,13 @@ ALTER TABLE "Checkout" ADD CONSTRAINT "Checkout_productId_fkey" FOREIGN KEY ("pr
 ALTER TABLE "CheckoutTranslation" ADD CONSTRAINT "CheckoutTranslation_checkoutId_fkey" FOREIGN KEY ("checkoutId") REFERENCES "Checkout"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CheckoutOrderBump" ADD CONSTRAINT "CheckoutOrderBump_checkoutId_fkey" FOREIGN KEY ("checkoutId") REFERENCES "Checkout"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductOrderBump" ADD CONSTRAINT "ProductOrderBump_mainProductId_fkey" FOREIGN KEY ("mainProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CheckoutOrderBump" ADD CONSTRAINT "CheckoutOrderBump_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductOrderBump" ADD CONSTRAINT "ProductOrderBump_bumpProductId_fkey" FOREIGN KEY ("bumpProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductThankYouRedirect" ADD CONSTRAINT "ProductThankYouRedirect_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Order" ADD CONSTRAINT "Order_checkoutId_fkey" FOREIGN KEY ("checkoutId") REFERENCES "Checkout"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

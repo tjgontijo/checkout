@@ -1,5 +1,5 @@
-import { Suspense } from 'react'
-import { SetPasswordForm } from '@/components/auth/set-password-form'
+import { Suspense } from 'react';
+import { SetPasswordForm } from '@/components/auth/set-password-form';
 
 export default function SetPasswordPage() {
   return (
@@ -14,5 +14,5 @@ export default function SetPasswordPage() {
         </Suspense>
       </div>
     </div>
-  )
+  );
 }

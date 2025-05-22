@@ -1,7 +1,7 @@
-"use server"
+'use server';
 
-import { getMenu } from '@/lib/services/menu.service'
-import { MenuItem } from '@/providers/sidebar-provider'
+import { getMenu } from '@/lib/services/menu.service';
+import { MenuItem } from '@/providers/sidebar-provider';
 
 /**
  * Server Action para buscar todos os dados da sidebar
@@ -14,16 +14,16 @@ export async function fetchSidebarData(): Promise<MenuItem[]> {
       getMenu(),
       new Promise<MenuItem[]>((_, reject) => {
         setTimeout(() => {
-          reject(new Error("Timeout ao buscar dados da sidebar (5s)"));
+          reject(new Error('Timeout ao buscar dados da sidebar (5s)'));
         }, 5000); // 5 segundos de timeout
-      })
+      }),
     ]);
 
     // Garantir que o resultado é um array
     return Array.isArray(menuItems) ? menuItems : [];
   } catch (error) {
     // Log do erro e retorno de array vazio para evitar quebrar a UI
-    console.error("Erro ao buscar dados da sidebar:", error);
+    console.error('Erro ao buscar dados da sidebar:', error);
     return [];
   }
 }

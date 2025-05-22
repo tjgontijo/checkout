@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client'
-import logger from '@/lib/logger'
+import { PrismaClient } from '@prisma/client';
+import logger from '@/lib/logger';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 const menuItemsData = [
   {
@@ -10,7 +10,7 @@ const menuItemsData = [
     href: '/dashboard',
     order: 1,
     showInMenu: true,
-    permissionName: 'dashboard.view'
+    permissionName: 'dashboard.view',
   },
   {
     label: 'Produtos',
@@ -18,7 +18,7 @@ const menuItemsData = [
     href: '/products',
     order: 2,
     showInMenu: true,
-    permissionName: 'products.view'
+    permissionName: 'products.view',
   },
   {
     label: 'Vendas',
@@ -26,7 +26,7 @@ const menuItemsData = [
     href: '/sales',
     order: 3,
     showInMenu: true,
-    permissionName: 'orders.view'
+    permissionName: 'orders.view',
   },
   {
     label: 'Clientes',
@@ -34,7 +34,7 @@ const menuItemsData = [
     href: '/customers',
     order: 4,
     showInMenu: true,
-    permissionName: 'users.view'
+    permissionName: 'users.view',
   },
   {
     label: 'Configurações',
@@ -42,39 +42,44 @@ const menuItemsData = [
     href: '/settings',
     order: 5,
     showInMenu: true,
-    permissionName: 'accessControl.view'
-  }
+    permissionName: 'accessControl.view',
+  },
 ];
-
 
 export async function seedMenuItems() {
   try {
     // Criar menu items principais com permissões
-    const menuItemsToSeed = await Promise.all(menuItemsData.map(async (menuItem) => {
-      const permission = await prisma.permission.findUnique({
-        where: { name: menuItem.permissionName }
-      })
+    const menuItemsToSeed = await Promise.all(
+      menuItemsData.map(async (menuItem) => {
+        const permission = await prisma.permission.findUnique({
+          where: { name: menuItem.permissionName },
+        });
 
-      return {
-        label: menuItem.label,
-        icon: menuItem.icon,
-        href: menuItem.href,
-        order: menuItem.order,
-        showInMenu: menuItem.showInMenu,
-        permissionId: permission?.id
-      }
-    }))
+        return {
+          label: menuItem.label,
+          icon: menuItem.icon,
+          href: menuItem.href,
+          order: menuItem.order,
+          showInMenu: menuItem.showInMenu,
+          permissionId: permission?.id,
+        };
+      })
+    );
 
     // Criar menu items principais
-    await prisma.menuItem.createMany({ data: menuItemsToSeed })
+    await prisma.menuItem.createMany({ data: menuItemsToSeed });
 
     // Criar submenus de Vendas
     const salesMenu = await prisma.menuItem.findFirst({
-      where: { href: '/sales' }
+      where: { href: '/sales' },
     });
     if (salesMenu) {
-      const ordersPermission = await prisma.permission.findUnique({ where: { name: 'orders.view' } });
-      const abandonedCartsPermission = await prisma.permission.findUnique({ where: { name: 'carts.view' } });
+      const ordersPermission = await prisma.permission.findUnique({
+        where: { name: 'orders.view' },
+      });
+      const abandonedCartsPermission = await prisma.permission.findUnique({
+        where: { name: 'carts.view' },
+      });
       await prisma.menuItem.createMany({
         data: [
           {
@@ -84,7 +89,7 @@ export async function seedMenuItems() {
             parentId: salesMenu.id,
             order: 1,
             showInMenu: true,
-            permissionId: ordersPermission?.id || null
+            permissionId: ordersPermission?.id || null,
           },
           {
             label: 'Carrinhos Abandonados',
@@ -93,24 +98,38 @@ export async function seedMenuItems() {
             parentId: salesMenu.id,
             order: 2,
             showInMenu: true,
-            permissionId: abandonedCartsPermission?.id || null
-          }
-        ]
+            permissionId: abandonedCartsPermission?.id || null,
+          },
+        ],
       });
     }
 
     // Criar submenus de Configurações
     const configMenu = await prisma.menuItem.findFirst({
-      where: { href: '/settings' }
+      where: { href: '/settings' },
     });
     if (configMenu) {
-      const lojaPermission = await prisma.permission.findUnique({ where: { name: 'preferences.view' } });
-      const emailsPermission = await prisma.permission.findUnique({ where: { name: 'emails.view' } });
-      const pagamentosPermission = await prisma.permission.findUnique({ where: { name: 'checkouts.view' } });
-      const relatoriosPermission = await prisma.permission.findUnique({ where: { name: 'auditLogs.view' } });
-      const usuariosPermission = await prisma.permission.findUnique({ where: { name: 'users.view' } });
-      const accessControlPermission = await prisma.permission.findUnique({ where: { name: 'accessControl.manage' } });
-      const webhooksPermission = await prisma.permission.findUnique({ where: { name: 'webhooks.view' } });
+      const lojaPermission = await prisma.permission.findUnique({
+        where: { name: 'preferences.view' },
+      });
+      const emailsPermission = await prisma.permission.findUnique({
+        where: { name: 'emails.view' },
+      });
+      const pagamentosPermission = await prisma.permission.findUnique({
+        where: { name: 'checkouts.view' },
+      });
+      const relatoriosPermission = await prisma.permission.findUnique({
+        where: { name: 'auditLogs.view' },
+      });
+      const usuariosPermission = await prisma.permission.findUnique({
+        where: { name: 'users.view' },
+      });
+      const accessControlPermission = await prisma.permission.findUnique({
+        where: { name: 'accessControl.manage' },
+      });
+      const webhooksPermission = await prisma.permission.findUnique({
+        where: { name: 'webhooks.view' },
+      });
       await prisma.menuItem.createMany({
         data: [
           {
@@ -120,7 +139,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 1,
             showInMenu: true,
-            permissionId: lojaPermission?.id || null            
+            permissionId: lojaPermission?.id || null,
           },
           {
             label: 'E-mails transacionais',
@@ -129,7 +148,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 2,
             showInMenu: true,
-            permissionId: emailsPermission?.id || null            
+            permissionId: emailsPermission?.id || null,
           },
           {
             label: 'Formas de pagamento',
@@ -138,7 +157,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 3,
             showInMenu: true,
-            permissionId: pagamentosPermission?.id || null            
+            permissionId: pagamentosPermission?.id || null,
           },
           {
             label: 'Relatórios',
@@ -147,7 +166,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 4,
             showInMenu: true,
-            permissionId: relatoriosPermission?.id || null
+            permissionId: relatoriosPermission?.id || null,
           },
           {
             label: 'Usuários',
@@ -156,7 +175,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 5,
             showInMenu: true,
-            permissionId: usuariosPermission?.id || null
+            permissionId: usuariosPermission?.id || null,
           },
           {
             label: 'Controle de Acesso',
@@ -165,7 +184,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 6,
             showInMenu: true,
-            permissionId: accessControlPermission?.id || null            
+            permissionId: accessControlPermission?.id || null,
           },
           {
             label: 'Menus',
@@ -174,7 +193,7 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 6,
             showInMenu: true,
-            permissionId: accessControlPermission?.id || null            
+            permissionId: accessControlPermission?.id || null,
           },
           {
             label: 'Webhooks',
@@ -183,14 +202,13 @@ export async function seedMenuItems() {
             parentId: configMenu.id,
             order: 7,
             showInMenu: true,
-            permissionId: webhooksPermission?.id || null            
-          }
-        ]
+            permissionId: webhooksPermission?.id || null,
+          },
+        ],
       });
     }
-    
   } catch (error) {
-    logger.error('Error seeding menu items:', error)
-    throw error
+    logger.error('Error seeding menu items:', error);
+    throw error;
   }
 }

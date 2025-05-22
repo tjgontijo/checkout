@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client'
-import { hash } from 'bcryptjs'
-import { faker } from '@faker-js/faker/locale/pt_BR'
+import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcryptjs';
+import { faker } from '@faker-js/faker/locale/pt_BR';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 function generateRandomUser(_index: number) {
   const firstName = faker.person.firstName();
@@ -67,8 +67,8 @@ export async function seedUsers() {
     await createAdminUser();
     await createRegularUsers();
   } catch {
-    process.exit(1)
+    process.exit(1);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
 }

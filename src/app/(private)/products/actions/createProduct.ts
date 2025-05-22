@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
 export type CreateProductResponse = {
   success: boolean;
@@ -18,25 +18,25 @@ export type CreateProductData = {
 export async function createProduct(formData: FormData): Promise<CreateProductResponse> {
   try {
     // Extrair dados do formulário
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    const priceStr = formData.get("price") as string;
-    const salesPageUrl = formData.get("salesPageUrl") as string;
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const priceStr = formData.get('price') as string;
+    const salesPageUrl = formData.get('salesPageUrl') as string;
 
     // Validar dados obrigatórios
     if (!name || !description || !priceStr || !salesPageUrl) {
       return {
         success: false,
-        message: "Todos os campos são obrigatórios",
+        message: 'Todos os campos são obrigatórios',
       };
     }
 
     // Converter e validar o preço
-    const price = parseFloat(priceStr.replace(",", "."));
+    const price = parseFloat(priceStr.replace(',', '.'));
     if (isNaN(price) || price <= 0) {
       return {
         success: false,
-        message: "O preço deve ser um valor numérico positivo",
+        message: 'O preço deve ser um valor numérico positivo',
       };
     }
 
@@ -48,11 +48,11 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
     } catch {
       // Captura erro sem usar variável
     }
-    
+
     if (!isValidUrl) {
       return {
         success: false,
-        message: "A URL da página de vendas é inválida",
+        message: 'A URL da página de vendas é inválida',
       };
     }
 
@@ -63,21 +63,21 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
         description,
         price,
         salesPageUrl,
-        priceCurrency: "BRL", // Valor padrão para moeda
+        priceCurrency: 'BRL', // Valor padrão para moeda
         isActive: true,
       },
     });
 
     return {
       success: true,
-      message: "Produto criado com sucesso",
+      message: 'Produto criado com sucesso',
       productId: product.id,
     };
   } catch (error) {
-    console.error("Erro ao criar produto:", error);
+    console.error('Erro ao criar produto:', error);
     return {
       success: false,
-      message: "Ocorreu um erro ao criar o produto. Tente novamente mais tarde.",
+      message: 'Ocorreu um erro ao criar o produto. Tente novamente mais tarde.',
     };
   }
 }

@@ -18,5 +18,5 @@ export function getVerificationEmailTemplate(verificationUrl: string): string {
         Se você não criou uma conta em nosso sistema, pode ignorar este email.
       </p>     
     </div>
-  `
+  `;
 }

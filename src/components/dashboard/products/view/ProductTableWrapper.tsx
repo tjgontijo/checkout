@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { ProductTable, Product } from "./ProductTable";
+import { useRouter } from 'next/navigation';
+import { ProductTable, Product } from './ProductTable';
 
 interface ProductTableWrapperProps {
   products: Product[];
@@ -11,10 +11,6 @@ export function ProductTableWrapper({ products }: ProductTableWrapperProps) {
   const router = useRouter();
 
   const handleEdit = (product: Product) => {
-    router.push(`/products/${product.id}/edit`);
-  };
-
-  const handleView = (product: Product) => {
     router.push(`/products/${product.id}`);
   };
 
@@ -24,12 +20,5 @@ export function ProductTableWrapper({ products }: ProductTableWrapperProps) {
     router.refresh();
   };
 
-  return (
-    <ProductTable
-      products={products}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onView={handleView}
-    />
-  );
+  return <ProductTable products={products} onEdit={handleEdit} onDelete={handleDelete} />;
 }

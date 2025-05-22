@@ -2,7 +2,4 @@
 import { updateUserRole } from './updateUserRole';
 import { deleteUser } from './deleteUser';
 
-export {
-  updateUserRole,
-  deleteUser
-};
+export { updateUserRole, deleteUser };
