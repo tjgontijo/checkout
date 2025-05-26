@@ -26,7 +26,7 @@ export async function checkIfDescendant(
   });
 
   // Se o item é filho direto, retorna true
-  if (children.some((child) => child.id === itemId)) {
+  if (children.some((child: { id: string }) => child.id === itemId)) {
     return true;
   }
 

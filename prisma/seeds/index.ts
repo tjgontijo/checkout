@@ -7,7 +7,11 @@ import { initialPermissions } from './seed-permissions';
 import { seedMenuItems } from './seed-menu-items';
 import { seedRolePermissions } from './seed-role-permission';
 import logger from '@/lib/logger';
-import { initialProducts } from './seed-products';
+import { seedProducts } from './seed-products';
+import { seedCheckouts } from './seed-checkouts';
+import { seedOrderBumps } from './seed-orderbumps';
+import { seedStores } from './seed-stores';
+import { seedStorePaymentConfig } from './seed-store-payment';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +27,9 @@ async function cleanDatabase() {
   await prisma.role.deleteMany();
   await prisma.menuItem.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.checkout.deleteMany();
+  await prisma.orderBump.deleteMany();
+  await prisma.storePaymentConfig.deleteMany();
 }
 
 async function createInitialData() {
@@ -40,8 +47,23 @@ async function createInitialData() {
     await prisma.role.createMany({ data: initialRoles });
     logger.info('Roles created');
 
-    await prisma.product.createMany({ data: initialProducts });
+    // Primeiro cria as stores
+    await seedStores(prisma);
+    logger.info('Stores criadas');
+
+    // Configurações de pagamento para as lojas
+    await seedStorePaymentConfig(prisma);
+    logger.info('Configurações de pagamento criadas');
+
+    // Depois os produtos que dependem das stores
+    await seedProducts(prisma);
     logger.info('Products created');
+
+    await seedCheckouts(prisma);
+    logger.info('Checkouts created');
+    
+    await seedOrderBumps(prisma);
+    logger.info('OrderBumps created');
 
     // Buscar recursos e ações para mapear seus IDs
     const resources = await prisma.resource.findMany();

@@ -28,8 +28,7 @@ model User {
   roles          Role[]   @relation("RoleToUser")
   auditLogs      AuditLog[]
   userConsents   UserConsent[]
-
-  @@index([id, email])
+  stores         Store[]
 }
 
 model Session {
@@ -176,6 +175,28 @@ model UserConsent {
   @@index([consentDate])
 }
 
+model TrackingSession {
+  id             String   @id @default(cuid())
+  utm_source     String?
+  utm_medium     String?
+  utm_campaign   String?
+  utm_content    String?
+  utm_term       String?
+  fbclid         String?
+  gclid          String?
+  referrer       String?
+  fbp            String?
+  fbc            String?
+  ip             String
+  userAgent      String
+  createdAt      DateTime @default(now())
+  lastSeenAt     DateTime @default(now())
+  orders         Order[]
+
+  @@index([createdAt, utm_source, utm_campaign])
+}
+
+
 // ========================
 // Checkout and Digital Sales
 // ========================
@@ -184,112 +205,63 @@ model Product {
   id              String   @id @default(cuid())
   name            String
   description     String
+  imageUrl        String?
   price           Int
   priceCurrency   String   @default("BRL") // Multi-moeda  
-  salesPageUrl    String  
+  salesPageUrl    String
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
 
   checkouts       Checkout[]
+
+  storeId         String             
+  store           Store              @relation(fields: [storeId], references: [id])
   
-  // Relações de order bumps
-  mainProductBumps ProductOrderBump[] @relation("MainProductOrderBumps") // Order bumps que este produto oferece
-  asBumpProduct   ProductOrderBump[] @relation("BumpProducts")          // Quando este produto é oferecido como order bump
-  
-  // Configuração de redirecionamento após pagamento
-  thankYouRedirect ProductThankYouRedirect? @relation("ProductThankYouRedirects")
-  
+  mainProductBumps OrderBump[] @relation("MainOrderBumps")
+  asBumpProduct   OrderBump[] @relation("BumpProducts")
+    
   orders          Order[]
-  productAsset    ProductAsset?
   orderItems      OrderItem[]
-  translations    ProductTranslation[]
   
   @@index([isActive, deletedAt])
 }
 
-model ProductTranslation {
-  id              String   @id @default(cuid())
-  productId       String
-  languageCode    String   // "pt-BR", "en-US", etc.
-  name            String
-  description     String
-  
-  product         Product  @relation(fields: [productId], references: [id])
-  
-  @@unique([productId, languageCode])
-}
 
-model ProductAsset {
-  id           String   @id @default(cuid())
-  productId    String   @unique
-  bucket       String   // nome do bucket MinIO
-  objectKey    String   // chave/caminho do objeto no MinIO
-  fileName     String
-  fileSize     Int
-  fileType     String
-  expiryDays   Int      @default(90)  // dias de expiração do link
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  product      Product  @relation(fields: [productId], references: [id])
-  @@index([productId])
-}
 
 
 model Checkout {
-  id              String    @id @default(cuid())
-  code            String    @unique
+  id              String    @id @default(cuid())  
   productId       String
-  price           Int // valor em centavos
-  priceCurrency   String    @default("BRL") // Multi-moeda
   campaignName    String?
-  upsellPageUrl   String?
-  allowCoupon     Boolean   @default(false)
+  
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
+  requiredFields  Json?     @default("[\"customerName\",\"customerEmail\",\"customerPhone\"]")
 
   product         Product   @relation(fields: [productId], references: [id])
-  orders          Order[]
-  translations    CheckoutTranslation[]
+  orders          Order[]  
   
-  @@index([isActive, deletedAt])
+  @@index([productId])
 }
 
-model CheckoutTranslation {
-  id              String   @id @default(cuid())
-  checkoutId      String
-  languageCode    String  // "pt-BR", "en-US", etc.
-  campaignName    String?
-  successMessage  String?
-  thankYouMessage String?
-  
-  checkout        Checkout @relation(fields: [checkoutId], references: [id])
-  
-  @@unique([checkoutId, languageCode])
-}
-
-/// Order bump é um produto adicional ofertado no checkout de outro produto.
-/// Order bump é um produto adicional que pode ser oferecido junto com outro produto
-model ProductOrderBump {
+model OrderBump {
   id                String   @id @default(cuid())
-  mainProductId     String   // Produto principal que oferece o order bump
-  bumpProductId     String   // Produto que será oferecido como order bump
-
-  /// Produto principal que oferece o order bump
-  mainProduct       Product  @relation("MainProductOrderBumps", fields: [mainProductId], references: [id])
-  /// Produto que será ofertado como order bump
+  mainProductId     String   
+  bumpProductId     String   
+  
+  mainProduct       Product  @relation("MainOrderBumps", fields: [mainProductId], references: [id])
   bumpProduct       Product  @relation("BumpProducts", fields: [bumpProductId], references: [id])
-
-  callToAction      String   // Ex: "Sim, eu aceito essa oferta especial!"
-  title             String   // Título do order bump
-  description       String   // Descrição do order bump
-  showProductImage  Boolean  @default(false) // Se deve exibir a imagem do produto
+  
+  title             String   
+  description       String   
+  specialPrice      Int
   displayOrder      Int?     // Ordem de exibição
   isActive          Boolean  @default(true)
+  
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   deletedAt         DateTime?
@@ -298,57 +270,35 @@ model ProductOrderBump {
   @@index([bumpProductId])
 }
 
-/// Configuração de redirecionamento após pagamento aprovado
-model ProductThankYouRedirect {
-  id                String   @id @default(cuid())
-  productId         String   // Produto associado
-  
-  /// Produto associado a este redirecionamento
-  product           Product  @relation("ProductThankYouRedirects", fields: [productId], references: [id])
-  
-  // URLs de redirecionamento por método de pagamento
-  cardRedirectUrl   String?  // URL para redirecionar após pagamento aprovado via cartão
-  pixRedirectUrl    String?  // URL para redirecionar após pagamento aprovado via PIX
-  
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  @@index([productId])
-  @@unique([productId])
-}
-
-enum PaymentStatus {
-  PENDING
-  APPROVED
-  CANCELLED
-  REFUNDED
-}
-
 model Order {
-  id              String        @id @default(cuid())
+  id              String        @id @default(uuid())
   checkoutId      String
   productId       String
-  customerName    String
-  customerEmail   String
-  customerPhone   String
+  customerId      String
   paidAmount      Float
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentCode     String?       // External payment reference (like Mercado Pago)
+  status          OrderStatus   @default(DRAFT)  
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+  
+  trackingSessionId String?
+  trackingSession TrackingSession? @relation(fields: [trackingSessionId], references: [id])
 
+  storeId         String        
+  store           Store         @relation(fields: [storeId], references: [id])
+    
   checkout        Checkout      @relation(fields: [checkoutId], references: [id])
-  product         Product       @relation(fields: [productId], references: [id])
-  accessToken     AccessToken?
+  product         Product       @relation(fields: [productId], references: [id])  
   orderItems      OrderItem[]
-
-  @@index([createdAt])
-  @@index([customerEmail])
+  statusHistory   OrderStatusHistory[]
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  paymentTransactions PaymentTransaction[]
+  
+@@index([status])
 }
 
 model OrderItem {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   orderId     String
   productId   String
   quantity    Int     @default(1)
@@ -356,42 +306,26 @@ model OrderItem {
   isOrderBump Boolean  @default(false)
   isUpsell    Boolean  @default(false)
   createdAt   DateTime @default(now())
-  
+  deletedAt   DateTime?
+
   order       Order   @relation(fields: [orderId], references: [id])
   product     Product @relation(fields: [productId], references: [id])
   
   @@index([orderId])
   @@index([productId])
+  @@index([deletedAt])
 }
 
-model AccessToken {
-  id              String    @id @default(cuid())
-  orderId         String    @unique
-  token           String    @unique
-  isActive        Boolean   @default(true)
-  downloadsCount  Int       @default(0)
-  maxDownloads    Int       @default(5)
-  expiresAt       DateTime
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  order           Order     @relation(fields: [orderId], references: [id])
-  downloads       Download[]
+model OrderStatusHistory {
+  id             String        @id @default(uuid())
+  orderId        String
+  previousStatus OrderStatus?
+  newStatus      OrderStatus
+  notes          String?
+  createdAt      DateTime      @default(now())
+  order          Order         @relation(fields: [orderId], references: [id])
   
-  @@index([isActive, createdAt])
-}
-
-model Download {
-  id            String    @id @default(cuid())
-  accessTokenId String
-  ipAddress     String
-  userAgent     String
-  fileName      String    // Nome do arquivo baixado
-  downloadedAt  DateTime  @default(now())
-  
-  accessToken   AccessToken @relation(fields: [accessTokenId], references: [id])
-  
-  @@index([accessTokenId, downloadedAt])
+  @@index([orderId, createdAt])
 }
 
 model Webhook {
@@ -427,93 +361,87 @@ model WebhookLog {
   @@index([event, sentAt])
 }
 
-model PaymentGateway {
-  id            String   @id @default(cuid())
-  name          String   @unique // "mercado_pago", "stripe", "pushin_pay"
-  displayName   String   // "Mercado Pago", "Stripe", "Pushin Pay"
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Customer {
+  id         String    @id @default(uuid())
+  name       String
+  email      String    @unique
+  phone      String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  orders     Order[]
   
-  affiliations  GatewayAffiliation[]
-  routes        PaymentRoute[]
-}
-
-model GatewayAffiliation {
-  id            String   @id @default(cuid())
-  affiliationName String  // Nome da afiliação (ex: "Conta Principal")
-  accessToken   String?
-  refreshToken  String?
-  expiresAt     DateTime?
-  gatewayUserId String?  // ID do usuário no gateway
-  metadata      Json?    // Dados específicos do gateway
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  gatewayId     String
-  gateway       PaymentGateway @relation(fields: [gatewayId], references: [id])
-  storeId       String?
-  store         Store?    @relation(fields: [storeId], references: [id])
-  
-  routes        PaymentRoute[]
-  
-  @@unique([gatewayId, affiliationName, storeId])
-}
-
-model PaymentMethod {
-  id            String   @id @default(cuid())
-  code          String   @unique // "credit_card", "pix", "boleto"
-  displayName   String   // "Cartão de Crédito", "PIX", "Boleto"
-  isActive      Boolean  @default(true)
-  
-  routes        PaymentRoute[]
-}
-
-model PaymentRoute {
-  id            String   @id @default(cuid())
-  currency      String   // "BRL", "USD"
-  isActive      Boolean  @default(true)
-  priority      Int      @default(1) // Para fallback
-  
-  methodId      String
-  method        PaymentMethod @relation(fields: [methodId], references: [id])
-  gatewayId     String
-  gateway       PaymentGateway @relation(fields: [gatewayId], references: [id])
-  affiliationId String
-  affiliation   GatewayAffiliation @relation(fields: [affiliationId], references: [id])
-  transactions PaymentTransaction[]
-  
-  @@unique([currency, methodId]) // Garante uma rota única por moeda+método  
+  @@index([email])
+  @@index([phone])
 }
 
 model PaymentTransaction {
-  id                String   @id @default(cuid())
-  gatewayOrderId    String?  // ID da ordem no gateway
-  gatewayPaymentId  String?  // ID do pagamento no gateway
-  status            String   // "pending", "approved", "rejected"
-  amount            Decimal
-  currency          String   @default("BRL")
-  paymentMethod     String?  // "credit_card", "boleto", "pix"
-  paymentDetails    Json?    // Detalhes específicos do método (número de boleto, QR code, etc)
-  externalReference String?
-  webhookData       Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  // Relacionamentos a serem adicionados quando os modelos Order e Customer existirem
-  // orderId          String
-  // order            Order    @relation(fields: [orderId], references: [id])
-  
-  routeId          String?
-  route            PaymentRoute? @relation(fields: [routeId], references: [id])
+  id                 String         @id @default(cuid())
+  orderId            String
+  order              Order          @relation(fields: [orderId], references: [id])
+
+  gatewayPaymentId   String?        // ID da transação no Mercado Pago / Stripe
+  status             PaymentStatus  // Enum: PENDING, APPROVED, FAILED, etc.
+  amount             Decimal
+  currency           String         @default("BRL")
+  paymentMethod      String         // Ex: "pix", "credit_card"
+  paymentDetails     Json?          // QR code, boleto URL, etc.
+  externalReference  String?        // Referência opcional nossa ou do gateway
+  webhookData        Json?          // Payload recebido do webhook (se houver)
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model StorePaymentConfig {
+  id             String   @id @default(cuid())
+  storeId        String
+  paymentMethod  String   // Ex: "pix", "credit_card"
+  currency       String   // Ex: "BRL", "USD"
+  provider       String   // Ex: "mercado_pago", "stripe"
+  config         Json     // Dados da chave pública/secreta ou token
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  store          Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, paymentMethod, currency]) // Evita duplicatas
+  @@index([provider])
 }
 
 model Store {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String  
+  ownerId     String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  affiliations GatewayAffiliation[]
+  owner       User     @relation(fields: [ownerId], references: [id])
+  paymentConfig     StorePaymentConfig[]
+  products    Product[]
+  orders      Order[]
+
+  @@index([ownerId])
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAYMENT_PROCESSING
+  PAID
+  CANCELLED
+  REFUNDED
+  DELIVERED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  FAILED
+  CANCELLED
+  REFUNDED
 }

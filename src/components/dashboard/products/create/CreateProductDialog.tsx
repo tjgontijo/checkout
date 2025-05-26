@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+
+
 import {
   Dialog,
   DialogContent,
@@ -30,7 +32,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
-import { createProduct } from '@/app/(private)/products/actions/createProduct';
+// Função para criar um produto via API
+async function createProduct(formData: FormData) {
+  const response = await fetch('/api/products', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao criar produto');
+  }
+
+  return data;
+}
 
 // Esquema de validação com Zod
 const productSchema = z.object({
@@ -90,29 +106,23 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('description', values.description);
-      formData.append('price', values.price);
+      formData.append('price', Math.floor(parseFloat(values.price.replace(',', '.')) * 100).toString());
+      formData.append('priceCurrency', 'BRL');
       formData.append('salesPageUrl', values.salesPageUrl);
+      formData.append('isActive', 'true');
+      formData.append('storeId', '1'); // TODO: Obter o ID da loja do usuário logado
 
-      // Enviar para a action
-      const result = await createProduct(formData);
+      await createProduct(formData);
+      toast.success('Produto criado com sucesso!');
+      handleOpenChange(false);
+      form.reset();
 
-      if (result.success) {
-        toast.success(result.message);
-        handleOpenChange(false);
-        form.reset();
-
-        // Chamar callback de sucesso ou atualizar a página
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.refresh();
-        }
-      } else {
-        toast.error(result.message);
-      }
+      // Atualizar a página
+      router.refresh();
+      if (onSuccess) onSuccess();
     } catch (error) {
-      toast.error('Erro ao criar produto');
-      console.error(error);
+      console.error('Erro ao criar produto:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar produto');
     } finally {
       setIsSubmitting(false);
     }

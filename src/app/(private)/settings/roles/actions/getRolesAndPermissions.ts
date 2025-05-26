@@ -3,10 +3,28 @@
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 
-// Tipagem manual para payload de Permission com relações
-type PermissionWithRelations = Prisma.PermissionGetPayload<{
-  include: { resource: true; action: true };
-}>;
+// Tipagem para permissão com relações
+type PermissionWithRelations = {
+  id: string;
+  name: string;
+  resourceId: string | null;
+  actionId: string | null;
+  description: string;
+  resource: {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+  action: {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+};
 
 // Mapeamento de permissões por recurso
 interface PermissionsByResource {
@@ -37,7 +55,7 @@ export async function getRolesAndPermissions() {
     });
 
     // Busca todas as permissões disponíveis, agrupadas por recurso
-    const permissions: PermissionWithRelations[] = await prisma.permission.findMany({
+    const permissions = await prisma.permission.findMany({
       include: {
         resource: true,
         action: true,

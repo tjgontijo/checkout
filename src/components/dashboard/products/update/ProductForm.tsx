@@ -55,8 +55,21 @@ interface ProductFormProps {
     priceCurrency: string;
     salesPageUrl: string;
     isActive: boolean;
+    storeId: string;
     cardRedirectUrl?: string | null;
     pixRedirectUrl?: string | null;
+    productAsset?: {
+      id: string;
+      bucket: string;
+      objectKey: string;
+      fileName: string;
+      fileSize: number;
+      fileType: string;
+      expiryDays: number;
+      productId: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null;
   };
   productId: string;
 }
@@ -90,13 +103,61 @@ export function ProductForm({ product }: ProductFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Aqui implementaremos a lógica de salvar o produto
-      console.log('Produto atualizado:', formValues);
-      // Simulação de sucesso
-      setTimeout(() => {
-        setIsSubmitting(false);
-        router.refresh();
-      }, 1000);
+      // Preparar os dados para envio
+      const { enableCustomThankYou, ...productData } = formValues;
+      
+      // Interface para os dados da API
+      interface ApiProductData {
+        name: string;
+        description: string;
+        price: number;
+        priceCurrency: string;
+        salesPageUrl: string;
+        isActive: boolean;
+        storeId: string;
+        asset?: typeof product.productAsset;
+      }
+      
+      // Dados do produto para a API
+      const apiData: ApiProductData = {
+        ...productData,
+        // Converter o preço para centavos se necessário (API espera em centavos)
+        price: Math.round(productData.price * 100),
+        storeId: product.storeId || ''
+      };
+      
+      // Adicionar informações de asset se existirem no produto original
+      if (product.productAsset) {
+        apiData.asset = product.productAsset;
+      }
+
+      // Enviar requisição para a API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao atualizar produto: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Erro ao atualizar produto');
+      }
+
+      // Atualizar as URLs de redirecionamento em uma API separada, se necessário
+      if (enableCustomThankYou) {
+        // Aqui poderia implementar a lógica para salvar as URLs de redirecionamento
+        // em uma API separada se necessário
+      }
+
+      setIsSubmitting(false);
+      router.refresh();
     } catch (err) {
       console.error('Erro ao atualizar produto:', err);
       setIsSubmitting(false);

@@ -13,7 +13,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { deleteProduct } from '@/app/(private)/products/actions/deleteProduct';
+// Função para deletar um produto via API
+async function deleteProduct(productId: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`/api/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao excluir produto');
+  }
+
+  return data;
+}
 
 interface DeleteProductDialogProps {
   productId: string | number;
@@ -33,24 +49,17 @@ export function DeleteProductDialog({
     try {
       setIsDeleting(true);
 
-      const formData = new FormData();
-      formData.append('productId', productId.toString());
+      await deleteProduct(productId.toString());
+      
+      toast.success('Produto excluído com sucesso!');
+      setIsOpen(false);
 
-      const result = await deleteProduct(formData);
-
-      if (result.success) {
-        toast.success(result.message);
-        setIsOpen(false);
-
-        // Chamar callback de sucesso, se fornecido
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          // Recarregar a página para atualizar a lista
-          window.location.reload();
-        }
+      // Chamar callback de sucesso, se fornecido
+      if (onSuccess) {
+        onSuccess();
       } else {
-        toast.error(result.message);
+        // Recarregar a página para atualizar a lista
+        window.location.reload();
       }
     } catch (error) {
       toast.error('Erro ao excluir produto');

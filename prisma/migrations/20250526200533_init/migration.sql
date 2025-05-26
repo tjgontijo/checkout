@@ -1,5 +1,8 @@
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'APPROVED', 'CANCELLED', 'REFUNDED');
+CREATE TYPE "OrderStatus" AS ENUM ('DRAFT', 'PENDING_PAYMENT', 'PAYMENT_PROCESSING', 'PAID', 'CANCELLED', 'REFUNDED', 'DELIVERED');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'APPROVED', 'FAILED', 'CANCELLED', 'REFUNDED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -142,10 +145,32 @@ CREATE TABLE "UserConsent" (
 );
 
 -- CreateTable
+CREATE TABLE "TrackingSession" (
+    "id" TEXT NOT NULL,
+    "utm_source" TEXT,
+    "utm_medium" TEXT,
+    "utm_campaign" TEXT,
+    "utm_content" TEXT,
+    "utm_term" TEXT,
+    "fbclid" TEXT,
+    "gclid" TEXT,
+    "referrer" TEXT,
+    "fbp" TEXT,
+    "fbc" TEXT,
+    "ip" TEXT NOT NULL,
+    "userAgent" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastSeenAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "TrackingSession_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "imageUrl" TEXT,
     "price" INTEGER NOT NULL,
     "priceCurrency" TEXT NOT NULL DEFAULT 'BRL',
     "salesPageUrl" TEXT NOT NULL,
@@ -153,96 +178,40 @@ CREATE TABLE "Product" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "storeId" TEXT NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "ProductTranslation" (
-    "id" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "languageCode" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-
-    CONSTRAINT "ProductTranslation_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ProductAsset" (
-    "id" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "bucket" TEXT NOT NULL,
-    "objectKey" TEXT NOT NULL,
-    "fileName" TEXT NOT NULL,
-    "fileSize" INTEGER NOT NULL,
-    "fileType" TEXT NOT NULL,
-    "expiryDays" INTEGER NOT NULL DEFAULT 90,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ProductAsset_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Checkout" (
     "id" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
-    "price" INTEGER NOT NULL,
-    "priceCurrency" TEXT NOT NULL DEFAULT 'BRL',
     "campaignName" TEXT,
-    "upsellPageUrl" TEXT,
-    "allowCoupon" BOOLEAN NOT NULL DEFAULT false,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "requiredFields" JSONB DEFAULT '["customerName","customerEmail","customerPhone"]',
 
     CONSTRAINT "Checkout_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "CheckoutTranslation" (
-    "id" TEXT NOT NULL,
-    "checkoutId" TEXT NOT NULL,
-    "languageCode" TEXT NOT NULL,
-    "campaignName" TEXT,
-    "successMessage" TEXT,
-    "thankYouMessage" TEXT,
-
-    CONSTRAINT "CheckoutTranslation_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ProductOrderBump" (
+CREATE TABLE "OrderBump" (
     "id" TEXT NOT NULL,
     "mainProductId" TEXT NOT NULL,
     "bumpProductId" TEXT NOT NULL,
-    "callToAction" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "showProductImage" BOOLEAN NOT NULL DEFAULT false,
+    "specialPrice" INTEGER NOT NULL,
     "displayOrder" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
-    CONSTRAINT "ProductOrderBump_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ProductThankYouRedirect" (
-    "id" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
-    "cardRedirectUrl" TEXT,
-    "pixRedirectUrl" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ProductThankYouRedirect_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "OrderBump_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -250,14 +219,14 @@ CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
     "checkoutId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
-    "customerName" TEXT NOT NULL,
-    "customerEmail" TEXT NOT NULL,
-    "customerPhone" TEXT NOT NULL,
+    "customerId" TEXT NOT NULL,
     "paidAmount" DOUBLE PRECISION NOT NULL,
-    "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
-    "paymentCode" TEXT,
+    "status" "OrderStatus" NOT NULL DEFAULT 'DRAFT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+    "trackingSessionId" TEXT,
+    "storeId" TEXT NOT NULL,
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
 );
@@ -272,35 +241,21 @@ CREATE TABLE "OrderItem" (
     "isOrderBump" BOOLEAN NOT NULL DEFAULT false,
     "isUpsell" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "AccessToken" (
+CREATE TABLE "OrderStatusHistory" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "downloadsCount" INTEGER NOT NULL DEFAULT 0,
-    "maxDownloads" INTEGER NOT NULL DEFAULT 5,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "previousStatus" "OrderStatus",
+    "newStatus" "OrderStatus" NOT NULL,
+    "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "AccessToken_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Download" (
-    "id" TEXT NOT NULL,
-    "accessTokenId" TEXT NOT NULL,
-    "ipAddress" TEXT NOT NULL,
-    "userAgent" TEXT NOT NULL,
-    "fileName" TEXT NOT NULL,
-    "downloadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Download_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "OrderStatusHistory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -334,81 +289,55 @@ CREATE TABLE "WebhookLog" (
 );
 
 -- CreateTable
-CREATE TABLE "PaymentGateway" (
+CREATE TABLE "Customer" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "displayName" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "PaymentGateway_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "GatewayAffiliation" (
-    "id" TEXT NOT NULL,
-    "affiliationName" TEXT NOT NULL,
-    "accessToken" TEXT,
-    "refreshToken" TEXT,
-    "expiresAt" TIMESTAMP(3),
-    "gatewayUserId" TEXT,
-    "metadata" JSONB,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "gatewayId" TEXT NOT NULL,
-    "storeId" TEXT,
-
-    CONSTRAINT "GatewayAffiliation_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "PaymentMethod" (
-    "id" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
-    "displayName" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-
-    CONSTRAINT "PaymentMethod_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "PaymentRoute" (
-    "id" TEXT NOT NULL,
-    "currency" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "priority" INTEGER NOT NULL DEFAULT 1,
-    "methodId" TEXT NOT NULL,
-    "gatewayId" TEXT NOT NULL,
-    "affiliationId" TEXT NOT NULL,
-
-    CONSTRAINT "PaymentRoute_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "PaymentTransaction" (
     "id" TEXT NOT NULL,
-    "gatewayOrderId" TEXT,
+    "orderId" TEXT NOT NULL,
     "gatewayPaymentId" TEXT,
-    "status" TEXT NOT NULL,
+    "status" "PaymentStatus" NOT NULL,
     "amount" DECIMAL(65,30) NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'BRL',
-    "paymentMethod" TEXT,
+    "paymentMethod" TEXT NOT NULL,
     "paymentDetails" JSONB,
     "externalReference" TEXT,
     "webhookData" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "routeId" TEXT,
 
     CONSTRAINT "PaymentTransaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StorePaymentConfig" (
+    "id" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "paymentMethod" TEXT NOT NULL,
+    "currency" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "config" JSONB NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "StorePaymentConfig_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Store" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "ownerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -425,9 +354,6 @@ CREATE TABLE "_RoleToUser" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE INDEX "User_id_email_idx" ON "User"("id", "email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
@@ -481,43 +407,22 @@ CREATE INDEX "UserConsent_consentDate_idx" ON "UserConsent"("consentDate");
 CREATE UNIQUE INDEX "UserConsent_userId_serviceContext_key" ON "UserConsent"("userId", "serviceContext");
 
 -- CreateIndex
+CREATE INDEX "TrackingSession_createdAt_utm_source_utm_campaign_idx" ON "TrackingSession"("createdAt", "utm_source", "utm_campaign");
+
+-- CreateIndex
 CREATE INDEX "Product_isActive_deletedAt_idx" ON "Product"("isActive", "deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProductTranslation_productId_languageCode_key" ON "ProductTranslation"("productId", "languageCode");
+CREATE INDEX "Checkout_productId_idx" ON "Checkout"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProductAsset_productId_key" ON "ProductAsset"("productId");
+CREATE INDEX "OrderBump_mainProductId_idx" ON "OrderBump"("mainProductId");
 
 -- CreateIndex
-CREATE INDEX "ProductAsset_productId_idx" ON "ProductAsset"("productId");
+CREATE INDEX "OrderBump_bumpProductId_idx" ON "OrderBump"("bumpProductId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Checkout_code_key" ON "Checkout"("code");
-
--- CreateIndex
-CREATE INDEX "Checkout_isActive_deletedAt_idx" ON "Checkout"("isActive", "deletedAt");
-
--- CreateIndex
-CREATE UNIQUE INDEX "CheckoutTranslation_checkoutId_languageCode_key" ON "CheckoutTranslation"("checkoutId", "languageCode");
-
--- CreateIndex
-CREATE INDEX "ProductOrderBump_mainProductId_idx" ON "ProductOrderBump"("mainProductId");
-
--- CreateIndex
-CREATE INDEX "ProductOrderBump_bumpProductId_idx" ON "ProductOrderBump"("bumpProductId");
-
--- CreateIndex
-CREATE INDEX "ProductThankYouRedirect_productId_idx" ON "ProductThankYouRedirect"("productId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "ProductThankYouRedirect_productId_key" ON "ProductThankYouRedirect"("productId");
-
--- CreateIndex
-CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
-
--- CreateIndex
-CREATE INDEX "Order_customerEmail_idx" ON "Order"("customerEmail");
+CREATE INDEX "Order_status_idx" ON "Order"("status");
 
 -- CreateIndex
 CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
@@ -526,16 +431,10 @@ CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
 CREATE INDEX "OrderItem_productId_idx" ON "OrderItem"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AccessToken_orderId_key" ON "AccessToken"("orderId");
+CREATE INDEX "OrderItem_deletedAt_idx" ON "OrderItem"("deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AccessToken_token_key" ON "AccessToken"("token");
-
--- CreateIndex
-CREATE INDEX "AccessToken_isActive_createdAt_idx" ON "AccessToken"("isActive", "createdAt");
-
--- CreateIndex
-CREATE INDEX "Download_accessTokenId_downloadedAt_idx" ON "Download"("accessTokenId", "downloadedAt");
+CREATE INDEX "OrderStatusHistory_orderId_createdAt_idx" ON "OrderStatusHistory"("orderId", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "Webhook_active_idx" ON "Webhook"("active");
@@ -547,16 +446,31 @@ CREATE INDEX "WebhookLog_webhookId_success_idx" ON "WebhookLog"("webhookId", "su
 CREATE INDEX "WebhookLog_event_sentAt_idx" ON "WebhookLog"("event", "sentAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PaymentGateway_name_key" ON "PaymentGateway"("name");
+CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GatewayAffiliation_gatewayId_affiliationName_storeId_key" ON "GatewayAffiliation"("gatewayId", "affiliationName", "storeId");
+CREATE UNIQUE INDEX "Customer_phone_key" ON "Customer"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PaymentMethod_code_key" ON "PaymentMethod"("code");
+CREATE INDEX "Customer_email_idx" ON "Customer"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PaymentRoute_currency_methodId_key" ON "PaymentRoute"("currency", "methodId");
+CREATE INDEX "Customer_phone_idx" ON "Customer"("phone");
+
+-- CreateIndex
+CREATE INDEX "PaymentTransaction_orderId_idx" ON "PaymentTransaction"("orderId");
+
+-- CreateIndex
+CREATE INDEX "PaymentTransaction_status_idx" ON "PaymentTransaction"("status");
+
+-- CreateIndex
+CREATE INDEX "StorePaymentConfig_provider_idx" ON "StorePaymentConfig"("provider");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StorePaymentConfig_storeId_paymentMethod_currency_key" ON "StorePaymentConfig"("storeId", "paymentMethod", "currency");
+
+-- CreateIndex
+CREATE INDEX "Store_ownerId_idx" ON "Store"("ownerId");
 
 -- CreateIndex
 CREATE INDEX "_RoleToUser_B_index" ON "_RoleToUser"("B");
@@ -592,25 +506,22 @@ ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "UserConsent" ADD CONSTRAINT "UserConsent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductTranslation" ADD CONSTRAINT "ProductTranslation_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ProductAsset" ADD CONSTRAINT "ProductAsset_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Checkout" ADD CONSTRAINT "Checkout_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CheckoutTranslation" ADD CONSTRAINT "CheckoutTranslation_checkoutId_fkey" FOREIGN KEY ("checkoutId") REFERENCES "Checkout"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderBump" ADD CONSTRAINT "OrderBump_mainProductId_fkey" FOREIGN KEY ("mainProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductOrderBump" ADD CONSTRAINT "ProductOrderBump_mainProductId_fkey" FOREIGN KEY ("mainProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderBump" ADD CONSTRAINT "OrderBump_bumpProductId_fkey" FOREIGN KEY ("bumpProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductOrderBump" ADD CONSTRAINT "ProductOrderBump_bumpProductId_fkey" FOREIGN KEY ("bumpProductId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_trackingSessionId_fkey" FOREIGN KEY ("trackingSessionId") REFERENCES "TrackingSession"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductThankYouRedirect" ADD CONSTRAINT "ProductThankYouRedirect_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Order" ADD CONSTRAINT "Order_checkoutId_fkey" FOREIGN KEY ("checkoutId") REFERENCES "Checkout"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -619,37 +530,28 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_checkoutId_fkey" FOREIGN KEY ("checkou
 ALTER TABLE "Order" ADD CONSTRAINT "Order_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AccessToken" ADD CONSTRAINT "AccessToken_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Download" ADD CONSTRAINT "Download_accessTokenId_fkey" FOREIGN KEY ("accessTokenId") REFERENCES "AccessToken"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderStatusHistory" ADD CONSTRAINT "OrderStatusHistory_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WebhookLog" ADD CONSTRAINT "WebhookLog_webhookId_fkey" FOREIGN KEY ("webhookId") REFERENCES "Webhook"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "GatewayAffiliation" ADD CONSTRAINT "GatewayAffiliation_gatewayId_fkey" FOREIGN KEY ("gatewayId") REFERENCES "PaymentGateway"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PaymentTransaction" ADD CONSTRAINT "PaymentTransaction_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "GatewayAffiliation" ADD CONSTRAINT "GatewayAffiliation_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "StorePaymentConfig" ADD CONSTRAINT "StorePaymentConfig_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PaymentRoute" ADD CONSTRAINT "PaymentRoute_methodId_fkey" FOREIGN KEY ("methodId") REFERENCES "PaymentMethod"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PaymentRoute" ADD CONSTRAINT "PaymentRoute_gatewayId_fkey" FOREIGN KEY ("gatewayId") REFERENCES "PaymentGateway"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PaymentRoute" ADD CONSTRAINT "PaymentRoute_affiliationId_fkey" FOREIGN KEY ("affiliationId") REFERENCES "GatewayAffiliation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PaymentTransaction" ADD CONSTRAINT "PaymentTransaction_routeId_fkey" FOREIGN KEY ("routeId") REFERENCES "PaymentRoute"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Store" ADD CONSTRAINT "Store_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_RoleToUser" ADD CONSTRAINT "_RoleToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
