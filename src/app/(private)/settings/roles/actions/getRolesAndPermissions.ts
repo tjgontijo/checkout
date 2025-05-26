@@ -14,13 +14,14 @@ type PermissionWithRelations = {
     id: string;
     name: string;
     description: string | null;
+    category: string | null;
     createdAt: Date;
     updatedAt: Date;
   } | null;
   action: {
     id: string;
     name: string;
-    description: string | null;
+    description: string;
     createdAt: Date;
     updatedAt: Date;
   } | null;
@@ -63,16 +64,49 @@ export async function getRolesAndPermissions() {
       orderBy: [{ resourceId: 'asc' }, { name: 'asc' }],
     });
 
-    // Agrupa permissões por categoria (resource)
+    // Define o tipo para o resultado da consulta do Prisma
+    type PrismaPermissionResult = {
+      id: string;
+      name: string;
+      resourceId: string | null;
+      actionId: string | null;
+      description: string;
+      resource: {
+        id: string;
+        name: string;
+        description: string | null;
+        category: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      } | null;
+      action: {
+        id: string;
+        name: string;
+        description: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      } | null;
+    };
+
+    // Agrupa permissões por categoria (resource) e garante que os tipos estejam corretos
     const permissionsByResource: PermissionsByResource = permissions.reduce(
-      (acc: PermissionsByResource, permission: PermissionWithRelations) => {
+      (acc: PermissionsByResource, permission: PrismaPermissionResult) => {
         const resourceName = permission.resource?.name || 'Sem categoria';
 
         if (!acc[resourceName]) {
           acc[resourceName] = [];
         }
+        
+        // Garante que action.description seja sempre uma string
+        const formattedPermission: PermissionWithRelations = {
+          ...permission,
+          action: permission.action ? {
+            ...permission.action,
+            description: permission.action.description || '',
+          } : null
+        };
 
-        acc[resourceName].push(permission);
+        acc[resourceName].push(formattedPermission);
         return acc;
       },
       {} as PermissionsByResource

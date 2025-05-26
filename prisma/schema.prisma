@@ -260,6 +260,8 @@ model OrderBump {
   description       String   
   specialPrice      Int
   displayOrder      Int?     // Ordem de exibição
+  callToAction      String?  // Texto do botão de ação
+  showProductImage  Boolean  @default(true) // Mostrar imagem do produto
   isActive          Boolean  @default(true)
   
   createdAt         DateTime @default(now())
